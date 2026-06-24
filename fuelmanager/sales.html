@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transactions — FuelManager</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app-layout">
+  <div class="sidebar" id="sidebar"></div>
+  <div class="main-content">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Transactions</div>
+        <div class="page-subtitle">Live today's sales feed</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:12px;color:var(--store);font-weight:600" id="live-dot">● LIVE</span>
+        <div id="user-badge-header"></div>
+      </div>
+    </div>
+    <div class="page-body">
+
+      <div class="stat-grid" style="margin-bottom:20px">
+        <div class="stat-card gas"><div class="stat-label">Gas</div><div class="stat-value" id="s-gas">—</div></div>
+        <div class="stat-card lottery"><div class="stat-label">Lottery</div><div class="stat-value" id="s-lot">—</div></div>
+        <div class="stat-card store"><div class="stat-label">Store</div><div class="stat-value" id="s-store">—</div></div>
+        <div class="stat-card total"><div class="stat-label">Total</div><div class="stat-value" id="s-total">—</div></div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div class="card-title" style="margin:0">All Transactions Today</div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-sm btn-secondary filter-btn active" data-filter="all">All</button>
+            <button class="btn btn-sm btn-secondary filter-btn" data-filter="gas">⛽ Gas</button>
+            <button class="btn btn-sm btn-secondary filter-btn" data-filter="lottery">🎟 Lottery</button>
+            <button class="btn btn-sm btn-secondary filter-btn" data-filter="store">🛒 Store</button>
+          </div>
+        </div>
+        <div id="tx-list"><div class="loading-state"><div class="spinner"></div><p>Loading transactions...</p></div></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { requireAuth, renderUserBadge } from './js/auth.js'
+  import { getTodaySales, getTodayTotals, fmt$, fmtTime, subscribeToSales, unsubscribe } from './js/db.js'
+  import { renderSidebar } from './js/sidebar.js'
+
+  const user = requireAuth()
+  if (!user) throw new Error()
+  document.getElementById('sidebar').innerHTML = renderSidebar('sales')
+  renderUserBadge('user-badge-header')
+
+  let allTx = []
+  let activeFilter = 'all'
+
+  async function load() {
+    const [totals, sales] = await Promise.all([getTodayTotals(), getTodaySales()])
+    if (totals.data) {
+      document.getElementById('s-gas').textContent = fmt$(totals.data.gas_total)
+      document.getElementById('s-lot').textContent = fmt$(totals.data.lottery_total)
+      document.getElementById('s-store').textContent = fmt$(totals.data.store_total)
+      document.getElementById('s-total').textContent = fmt$(totals.data.grand_total)
+    }
+    const { gas, lottery, store } = sales
+    allTx = [
+      ...gas.map(r=>({...r,type:'gas',icon:'⛽',label:`Pump ${r.pump_number} · ${r.fuel_type}`,detail:`${parseFloat(r.gallons).toFixed(3)} gal @ $${r.price_per_gallon}`})),
+      ...lottery.map(r=>({...r,type:'lottery',icon:'🎟',label:r.ticket_type,detail:`${r.quantity} ticket${r.quantity>1?'s':''}`})),
+      ...store.map(r=>({...r,type:'store',icon:'🛒',label:r.item_name||r.category,detail:`${r.category} · qty ${r.quantity}`})),
+    ].sort((a,b)=>new Date(b.sold_at||b.created_at)-new Date(a.sold_at||a.created_at))
+    renderList()
+  }
+
+  function renderList() {
+    const filtered = activeFilter==='all' ? allTx : allTx.filter(t=>t.type===activeFilter)
+    const el = document.getElementById('tx-list')
+    if (!filtered.length) { el.innerHTML='<div class="empty-state"><p>No transactions yet.</p></div>'; return }
+    el.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>Time</th><th>Type</th><th>Description</th><th>Payment</th><th style="text-align:right">Amount</th></tr></thead>
+      <tbody>${filtered.map(r=>`
+        <tr>
+          <td style="color:var(--text-2);font-size:12px">${fmtTime(r.sold_at||r.created_at)}</td>
+          <td><span class="badge badge-${r.type}">${r.icon} ${r.type}</span></td>
+          <td>
+            <div style="font-weight:500">${r.label}</div>
+            <div style="font-size:11px;color:var(--text-3)">${r.detail}</div>
+          </td>
+          <td style="color:var(--text-2);font-size:12px;text-transform:capitalize">${r.payment_method}</td>
+          <td style="text-align:right;font-weight:600">${fmt$(r.total_amount)}</td>
+        </tr>
+      `).join('')}</tbody>
+    </table></div>`
+  }
+
+  document.querySelectorAll('.filter-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active','btn-gas','btn-lottery','btn-store'))
+      btn.classList.add('active')
+      activeFilter = btn.dataset.filter
+      renderList()
+    })
+  })
+
+  load()
+  const ch = subscribeToSales(()=>load())
+  window.addEventListener('beforeunload',()=>unsubscribe(ch))
+</script>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — FuelManager</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app-layout">
+  <div class="sidebar" id="sidebar"></div>
+  <div class="main-content">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Dashboard</div>
+        <div class="page-subtitle" id="live-date">Today</div>
+      </div>
+      <div style="font-size:18px;font-weight:700;color:var(--text-2)" id="live-clock"></div>
+    </div>
+    <div class="page-body">
+
+      <!-- Today's Totals -->
+      <div class="stat-grid" id="stat-grid">
+        <div class="stat-card gas"><div class="stat-label">Gas Sales</div><div class="stat-value" id="gas-total">—</div><div class="stat-sub" id="gas-gallons">Loading...</div></div>
+        <div class="stat-card lottery"><div class="stat-label">Lottery Sales</div><div class="stat-value" id="lottery-total">—</div><div class="stat-sub" id="lottery-txns">Loading...</div></div>
+        <div class="stat-card store"><div class="stat-label">Store Sales</div><div class="stat-value" id="store-total">—</div><div class="stat-sub" id="store-txns">Loading...</div></div>
+        <div class="stat-card total"><div class="stat-label">Total Revenue</div><div class="stat-value" id="grand-total">—</div><div class="stat-sub" id="total-txns">Loading...</div></div>
+      </div>
+
+      <div class="grid-2">
+        <!-- Recent Transactions -->
+        <div class="card">
+          <div class="card-title">Recent Transactions</div>
+          <div id="recent-list"><div class="loading-state"><div class="spinner"></div></div></div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div>
+          <div class="card mb-4">
+            <div class="card-title">Quick Actions</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <a href="record-sale.html" class="btn btn-gas btn-lg">💳 Record a Sale</a>
+              <a href="inventory.html" class="btn btn-secondary btn-lg">📦 Check Inventory</a>
+              <a href="timesheet.html" class="btn btn-secondary btn-lg">🕐 Clock In / Out</a>
+              <a href="prices.html" class="btn btn-secondary btn-lg">⛽ Update Fuel Price</a>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Today's Date</div>
+            <div style="font-size:22px;font-weight:700;color:var(--text)" id="today-date">—</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { requireAuth, renderUserBadge } from './js/auth.js'
+  import { getTodayTotals, getTodaySales, fmt$, fmtTime, subscribeToSales } from './js/db.js'
+  import { startClock } from './js/app.js'
+  import { renderSidebar } from './js/sidebar.js'
+
+  const user = requireAuth()
+  if (!user) throw new Error('Not logged in')
+
+  document.getElementById('sidebar').innerHTML = renderSidebar('index')
+  renderUserBadge('user-badge')
+  startClock('live-clock')
+
+  const now = new Date()
+  document.getElementById('live-date').textContent = now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})
+  document.getElementById('today-date').textContent = now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})
+
+  async function loadTotals() {
+    const { data } = await getTodayTotals()
+    if (data) {
+      document.getElementById('gas-total').textContent = fmt$(data.gas_total)
+      document.getElementById('gas-gallons').textContent = `${parseFloat(data.total_gallons||0).toFixed(1)} gallons`
+      document.getElementById('lottery-total').textContent = fmt$(data.lottery_total)
+      document.getElementById('lottery-txns').textContent = `${data.lottery_transactions||0} tickets`
+      document.getElementById('store-total').textContent = fmt$(data.store_total)
+      document.getElementById('store-txns').textContent = `${data.store_transactions||0} items`
+      document.getElementById('grand-total').textContent = fmt$(data.grand_total)
+      document.getElementById('total-txns').textContent = `${data.total_transactions||0} total transactions`
+    }
+  }
+
+  async function loadRecent() {
+    const { gas, lottery, store } = await getTodaySales()
+    const all = [
+      ...gas.map(r => ({...r, type:'gas', label:`Pump ${r.pump_number} · ${r.fuel_type}`, color:'gas'})),
+      ...lottery.map(r => ({...r, type:'lottery', label:`${r.ticket_type} × ${r.quantity}`, color:'lottery'})),
+      ...store.map(r => ({...r, type:'store', label:`${r.item_name||r.category}`, color:'store'})),
+    ].sort((a,b) => new Date(b.sold_at||b.created_at) - new Date(a.sold_at||a.created_at)).slice(0,10)
+
+    const el = document.getElementById('recent-list')
+    if (!all.length) { el.innerHTML = '<div class="empty-state"><p>No transactions yet today.</p></div>'; return }
+
+    el.innerHTML = all.map(r => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);">
+        <div>
+          <span class="badge badge-${r.color}" style="margin-right:8px">${r.type}</span>
+          <span style="font-size:13px">${r.label}</span>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:13px;font-weight:600">${fmt$(r.total_amount)}</div>
+          <div style="font-size:11px;color:var(--text-3)">${fmtTime(r.sold_at||r.created_at)}</div>
+        </div>
+      </div>
+    `).join('')
+  }
+
+  loadTotals()
+  loadRecent()
+
+  // Real-time updates
+  subscribeToSales(() => { loadTotals(); loadRecent() })
+</script>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventory — FuelManager</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app-layout">
+  <div class="sidebar" id="sidebar"></div>
+  <div class="main-content">
+    <div class="page-header">
+      <div><div class="page-title">Inventory</div><div class="page-subtitle">Stock levels and reorder alerts</div></div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <button class="btn btn-primary" id="add-btn">+ Add Item</button>
+        <div id="user-badge-header"></div>
+      </div>
+    </div>
+    <div class="page-body">
+
+      <div id="alert-bar"></div>
+
+      <!-- Add Item Form (hidden by default) -->
+      <div class="card mb-4" id="add-form" style="display:none">
+        <div class="card-title">Add New Item</div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Item Name</label><input type="text" class="form-input" id="new-name" placeholder="e.g. Monster Energy 16oz"></div>
+          <div class="form-group"><label class="form-label">Category</label>
+            <select class="form-select" id="new-cat">
+              <option>beverages</option><option>snacks</option><option>tobacco</option>
+              <option>auto</option><option>coffee</option><option>other</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row-3">
+          <div class="form-group"><label class="form-label">Current Qty</label><input type="number" class="form-input" id="new-qty" placeholder="0" min="0"></div>
+          <div class="form-group"><label class="form-label">Reorder At</label><input type="number" class="form-input" id="new-reorder" placeholder="5" min="0"></div>
+          <div class="form-group"><label class="form-label">Unit Cost</label><input type="number" class="form-input" id="new-cost" placeholder="1.50" step="0.01"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Vendor</label><input type="text" class="form-input" id="new-vendor" placeholder="e.g. McLane, Core-Mark"></div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-primary" id="save-item-btn">Save Item</button>
+          <button class="btn btn-secondary" id="cancel-add-btn">Cancel</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div class="card-title" style="margin:0">All Items</div>
+          <input type="text" class="form-input" id="search" placeholder="Search items..." style="width:220px">
+        </div>
+        <div id="inv-list"><div class="loading-state"><div class="spinner"></div><p>Loading inventory...</p></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { requireAuth, renderUserBadge } from './js/auth.js'
+  import { getInventory, updateInventoryQty, addInventoryItem } from './js/db.js'
+  import { toast } from './js/app.js'
+  import { renderSidebar } from './js/sidebar.js'
+
+  const user = requireAuth()
+  if (!user) throw new Error()
+  document.getElementById('sidebar').innerHTML = renderSidebar('inventory')
+  renderUserBadge('user-badge-header')
+
+  let items = []
+
+  async function load() {
+    const { data, error } = await getInventory()
+    if (error) { document.getElementById('inv-list').innerHTML='<div class="error-state"><p>Failed to load inventory.</p></div>'; return }
+    items = data
+    // Show low stock alerts
+    const low = items.filter(i=>i.current_qty <= i.reorder_threshold)
+    document.getElementById('alert-bar').innerHTML = low.length
+      ? `<div class="alert alert-amber mb-4">⚠️ ${low.length} item${low.length>1?'s':''} at or below reorder level: ${low.map(i=>i.item_name).join(', ')}</div>`
+      : ''
+    render(items)
+  }
+
+  function render(list) {
+    const el = document.getElementById('inv-list')
+    if (!list.length) { el.innerHTML='<div class="empty-state"><p>No items found.</p></div>'; return }
+    el.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>Item</th><th>Category</th><th>In Stock</th><th>Reorder At</th><th>Vendor</th><th>Status</th><th>Update Qty</th></tr></thead>
+      <tbody>${list.map(item=>{
+        const low = item.current_qty <= item.reorder_threshold
+        return `<tr>
+          <td style="font-weight:500">${item.item_name}</td>
+          <td><span class="badge badge-gray">${item.category}</span></td>
+          <td style="font-weight:600;color:${low?'var(--red)':'var(--text)'}">${item.current_qty}</td>
+          <td style="color:var(--text-2)">${item.reorder_threshold}</td>
+          <td style="color:var(--text-2);font-size:12px">${item.vendor||'—'}</td>
+          <td>${low?'<span class="badge badge-red">Low Stock</span>':'<span class="badge badge-store">OK</span>'}</td>
+          <td>
+            <div style="display:flex;gap:6px;align-items:center">
+              <input type="number" value="${item.current_qty}" min="0" style="width:70px;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px" id="qty-${item.id}">
+              <button class="btn btn-sm btn-secondary" onclick="updateQty('${item.id}')">Save</button>
+            </div>
+          </td>
+        </tr>`
+      }).join('')}</tbody>
+    </table></div>`
+  }
+
+  window.updateQty = async (id) => {
+    const input = document.getElementById('qty-'+id)
+    const qty = parseInt(input.value)
+    if (isNaN(qty)||qty<0) { toast('Enter a valid quantity.','error'); return }
+    const { error } = await updateInventoryQty(id, qty)
+    if (error) toast('Error: '+error.message,'error')
+    else { toast('Quantity updated!','success'); load() }
+  }
+
+  document.getElementById('search').addEventListener('input', e=>{
+    const q = e.target.value.toLowerCase()
+    render(q ? items.filter(i=>i.item_name.toLowerCase().includes(q)||i.category.toLowerCase().includes(q)) : items)
+  })
+
+  document.getElementById('add-btn').addEventListener('click',()=>{ document.getElementById('add-form').style.display='block'; document.getElementById('add-btn').style.display='none' })
+  document.getElementById('cancel-add-btn').addEventListener('click',()=>{ document.getElementById('add-form').style.display='none'; document.getElementById('add-btn').style.display='' })
+
+  document.getElementById('save-item-btn').addEventListener('click', async ()=>{
+    const name = document.getElementById('new-name').value.trim()
+    const qty = parseInt(document.getElementById('new-qty').value)||0
+    if (!name) { toast('Enter item name.','error'); return }
+    const { error } = await addInventoryItem({
+      item_name: name,
+      category: document.getElementById('new-cat').value,
+      current_qty: qty,
+      reorder_threshold: parseInt(document.getElementById('new-reorder').value)||5,
+      unit_cost: parseFloat(document.getElementById('new-cost').value)||0,
+      vendor: document.getElementById('new-vendor').value.trim()||null
+    })
+    if (error) toast('Error: '+error.message,'error')
+    else { toast('Item added!','success'); document.getElementById('add-form').style.display='none'; document.getElementById('add-btn').style.display=''; load() }
+  })
+
+  load()
+</script>
+</body>
+</html>

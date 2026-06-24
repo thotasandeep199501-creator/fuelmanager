@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — FuelManager</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .login-tabs { display:flex; gap:0; margin-bottom:20px; border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden; }
+    .login-tab { flex:1; padding:9px; font-size:13px; font-weight:500; border:none; background:var(--surface); color:var(--text-2); cursor:pointer; transition:background 0.15s; }
+    .login-tab.active { background:var(--gas); color:#fff; }
+    .pin-section, .email-section { display:none; }
+    .pin-section.visible, .email-section.visible { display:block; }
+    .error-msg { color:var(--red); font-size:13px; text-align:center; margin-bottom:12px; min-height:20px; }
+  </style>
+</head>
+<body>
+<div class="login-page">
+  <div class="login-card">
+    <div class="login-logo">
+      <h1>⛽ FuelManager</h1>
+      <p>Main Street Station · Waukesha, WI</p>
+    </div>
+
+    <div class="login-tabs">
+      <button class="login-tab active" onclick="switchTab('pin')">Cashier PIN</button>
+      <button class="login-tab" onclick="switchTab('email')">Manager Login</button>
+    </div>
+
+    <!-- PIN PAD -->
+    <div class="pin-section visible" id="pin-section">
+      <div class="pin-display">
+        <div class="pin-dot" id="d1"></div>
+        <div class="pin-dot" id="d2"></div>
+        <div class="pin-dot" id="d3"></div>
+        <div class="pin-dot" id="d4"></div>
+      </div>
+      <div class="error-msg" id="pin-error"></div>
+      <div class="pin-pad">
+        <button class="pin-key" onclick="pressKey('1')">1</button>
+        <button class="pin-key" onclick="pressKey('2')">2</button>
+        <button class="pin-key" onclick="pressKey('3')">3</button>
+        <button class="pin-key" onclick="pressKey('4')">4</button>
+        <button class="pin-key" onclick="pressKey('5')">5</button>
+        <button class="pin-key" onclick="pressKey('6')">6</button>
+        <button class="pin-key" onclick="pressKey('7')">7</button>
+        <button class="pin-key" onclick="pressKey('8')">8</button>
+        <button class="pin-key" onclick="pressKey('9')">9</button>
+        <button class="pin-key clear" onclick="clearPin()">Clear</button>
+        <button class="pin-key" onclick="pressKey('0')">0</button>
+        <button class="pin-key clear" onclick="backspace()">⌫</button>
+      </div>
+    </div>
+
+    <!-- EMAIL LOGIN -->
+    <div class="email-section" id="email-section">
+      <div class="error-msg" id="email-error"></div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="email-input" placeholder="manager@mainstreetstation.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" class="form-input" id="password-input" placeholder="••••••••">
+      </div>
+      <button class="btn btn-primary" style="width:100%" id="login-btn" onclick="doEmailLogin()">Sign In</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { loginWithPin, loginWithEmail, getSession } from './js/auth.js'
+
+  // If already logged in, go to dashboard
+  if (getSession()) window.location.href = 'index.html'
+
+  let pin = ''
+
+  window.switchTab = (tab) => {
+    document.querySelectorAll('.login-tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='pin')||(i===1&&tab==='email')))
+    document.getElementById('pin-section').classList.toggle('visible', tab==='pin')
+    document.getElementById('email-section').classList.toggle('visible', tab==='email')
+    clearPin()
+  }
+
+  window.pressKey = async (key) => {
+    if (pin.length >= 4) return
+    pin += key
+    updateDots()
+    if (pin.length === 4) {
+      document.getElementById('pin-error').textContent = ''
+      const { data, error } = await loginWithPin(pin)
+      if (error) {
+        document.getElementById('pin-error').textContent = error.message
+        setTimeout(clearPin, 600)
+      } else {
+        // Cashiers go to record-sale, managers go to dashboard
+        window.location.href = data.role === 'manager' || data.role === 'supervisor' ? 'index.html' : 'record-sale.html'
+      }
+    }
+  }
+
+  window.clearPin = () => { pin = ''; updateDots() }
+  window.backspace = () => { pin = pin.slice(0,-1); updateDots() }
+
+  function updateDots() {
+    for (let i=1;i<=4;i++) {
+      document.getElementById('d'+i).classList.toggle('filled', i<=pin.length)
+    }
+  }
+
+  window.doEmailLogin = async () => {
+    const email = document.getElementById('email-input').value.trim()
+    const password = document.getElementById('password-input').value
+    if (!email || !password) { document.getElementById('email-error').textContent = 'Please enter email and password.'; return }
+    const btn = document.getElementById('login-btn')
+    btn.disabled = true; btn.textContent = 'Signing in...'
+    const { data, error } = await loginWithEmail(email, password)
+    if (error) {
+      document.getElementById('email-error').textContent = error.message
+      btn.disabled = false; btn.textContent = 'Sign In'
+    } else {
+      window.location.href = 'index.html'
+    }
+  }
+
+  // Allow Enter key for email login
+  document.getElementById('password-input')?.addEventListener('keydown', e => { if (e.key==='Enter') window.doEmailLogin() })
+</script>
+</body>
+</html>

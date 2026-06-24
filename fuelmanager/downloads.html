@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Downloads — FuelManager</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app-layout">
+  <div class="sidebar" id="sidebar"></div>
+  <div class="main-content">
+    <div class="page-header">
+      <div><div class="page-title">Downloads</div><div class="page-subtitle">Export your data as CSV or PDF</div></div>
+      <div id="user-badge-header"></div>
+    </div>
+    <div class="page-body">
+
+      <div class="alert alert-gas mb-6">ℹ️ Choose a date range and export format. CSV files open in Excel. PDF is printer-friendly.</div>
+
+      <div class="card mb-6">
+        <div class="card-title">Export Settings</div>
+        <div class="form-row" style="max-width:500px">
+          <div class="form-group"><label class="form-label">From Date</label><input type="date" class="form-input" id="exp-from"></div>
+          <div class="form-group"><label class="form-label">To Date</label><input type="date" class="form-input" id="exp-to"></div>
+        </div>
+        <div class="form-group" style="max-width:240px">
+          <label class="form-label">Data to Export</label>
+          <select class="form-select" id="exp-type">
+            <option value="gas">Gas Sales</option>
+            <option value="lottery">Lottery Sales</option>
+            <option value="store">Store Sales</option>
+            <option value="all">All Sales Combined</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:16px;flex-wrap:wrap">
+        <div class="card" style="flex:1;min-width:240px">
+          <div class="card-title">📄 CSV Export</div>
+          <p style="font-size:13px;color:var(--text-2);margin-bottom:16px">Downloads a spreadsheet file. Open directly in Excel or Google Sheets.</p>
+          <button class="btn btn-primary btn-lg" style="width:100%" id="csv-btn">Download CSV</button>
+        </div>
+        <div class="card" style="flex:1;min-width:240px">
+          <div class="card-title">🖨️ Print / PDF</div>
+          <p style="font-size:13px;color:var(--text-2);margin-bottom:16px">Opens a print-ready report. Use your browser's Print → Save as PDF.</p>
+          <button class="btn btn-secondary btn-lg" style="width:100%" id="print-btn">Open Print View</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { requireAuth, renderUserBadge } from './js/auth.js'
+  import { getSalesByRange } from './js/db.js'
+  import { toast } from './js/app.js'
+  import { renderSidebar } from './js/sidebar.js'
+
+  const user = requireAuth()
+  if (!user) throw new Error()
+  document.getElementById('sidebar').innerHTML = renderSidebar('downloads')
+  renderUserBadge('user-badge-header')
+
+  const today = new Date().toISOString().split('T')[0]
+  const monthAgo = new Date(); monthAgo.setDate(monthAgo.getDate()-30)
+  document.getElementById('exp-from').value = monthAgo.toISOString().split('T')[0]
+  document.getElementById('exp-to').value = today
+
+  async function getData() {
+    const from = document.getElementById('exp-from').value
+    const to = document.getElementById('exp-to').value
+    const type = document.getElementById('exp-type').value
+    if (!from||!to) { toast('Select date range.','error'); return null }
+    let rows = []
+    if (type==='gas'||type==='all') {
+      const {data} = await getSalesByRange('gas_sales',from,to)
+      ;(data||[]).forEach(r=>rows.push({Date:r.sold_at?.split('T')[0],Time:r.sold_at?.split('T')[1]?.slice(0,5),Type:'Gas',Description:`Pump ${r.pump_number} · ${r.fuel_type}`,Gallons:r.gallons,Amount:r.total_amount,Payment:r.payment_method}))
+    }
+    if (type==='lottery'||type==='all') {
+      const {data} = await getSalesByRange('lottery_sales',from,to)
+      ;(data||[]).forEach(r=>rows.push({Date:r.sold_at?.split('T')[0],Time:r.sold_at?.split('T')[1]?.slice(0,5),Type:'Lottery',Description:`${r.ticket_type} × ${r.quantity}`,Gallons:'',Amount:r.total_amount,Payment:r.payment_method}))
+    }
+    if (type==='store'||type==='all') {
+      const {data} = await getSalesByRange('store_sales',from,to)
+      ;(data||[]).forEach(r=>rows.push({Date:r.sold_at?.split('T')[0],Time:r.sold_at?.split('T')[1]?.slice(0,5),Type:'Store',Description:`${r.item_name||r.category}`,Gallons:'',Amount:r.total_amount,Payment:r.payment_method}))
+    }
+    return rows.sort((a,b)=>(a.Date+a.Time)<(b.Date+b.Time)?1:-1)
+  }
+
+  document.getElementById('csv-btn').addEventListener('click', async ()=>{
+    const btn = document.getElementById('csv-btn')
+    btn.disabled=true; btn.textContent='Preparing...'
+    const rows = await getData()
+    if (!rows) { btn.disabled=false; btn.textContent='Download CSV'; return }
+    if (!rows.length) { toast('No data in that date range.','error'); btn.disabled=false; btn.textContent='Download CSV'; return }
+    const headers = Object.keys(rows[0])
+    const csv = [headers.join(','), ...rows.map(r=>headers.map(h=>JSON.stringify(r[h]??'')).join(','))].join('\n')
+    const blob = new Blob([csv], {type:'text/csv'})
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href=url; a.download=`fuelmanager-export-${document.getElementById('exp-from').value}-to-${document.getElementById('exp-to').value}.csv`
+    a.click(); URL.revokeObjectURL(url)
+    toast('CSV downloaded!','success')
+    btn.disabled=false; btn.textContent='Download CSV'
+  })
+
+  document.getElementById('print-btn').addEventListener('click', async ()=>{
+    const btn = document.getElementById('print-btn')
+    btn.disabled=true; btn.textContent='Preparing...'
+    const rows = await getData()
+    if (!rows) { btn.disabled=false; btn.textContent='Open Print View'; return }
+    if (!rows.length) { toast('No data in that date range.','error'); btn.disabled=false; btn.textContent='Open Print View'; return }
+    const total = rows.reduce((s,r)=>s+parseFloat(r.Amount||0),0)
+    const html = `<!DOCTYPE html><html><head><title>FuelManager Export</title>
+    <style>body{font-family:sans-serif;font-size:12px;padding:24px}h1{font-size:18px;margin-bottom:4px}p{color:#666;margin-bottom:16px}table{width:100%;border-collapse:collapse}th,td{padding:7px 10px;border:1px solid #ddd;text-align:left}th{background:#f5f5f5;font-weight:600}tfoot td{font-weight:700}@media print{body{padding:0}}</style>
+    </head><body>
+    <h1>⛽ Main Street Station — Sales Export</h1>
+    <p>${document.getElementById('exp-from').value} to ${document.getElementById('exp-to').value} · ${rows.length} transactions</p>
+    <table><thead><tr><th>Date</th><th>Time</th><th>Type</th><th>Description</th><th>Amount</th><th>Payment</th></tr></thead>
+    <tbody>${rows.map(r=>`<tr><td>${r.Date}</td><td>${r.Time}</td><td>${r.Type}</td><td>${r.Description}</td><td>$${parseFloat(r.Amount).toFixed(2)}</td><td>${r.Payment}</td></tr>`).join('')}</tbody>
+    <tfoot><tr><td colspan="4" style="text-align:right">TOTAL</td><td>$${total.toFixed(2)}</td><td></td></tr></tfoot>
+    </table></body></html>`
+    const w = window.open('','_blank')
+    w.document.write(html); w.document.close(); w.print()
+    btn.disabled=false; btn.textContent='Open Print View'
+  })
+</script>
+</body>
+</html>
