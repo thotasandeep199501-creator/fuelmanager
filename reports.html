@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reports — FuelManager</title>
+<link rel="stylesheet" href="css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-logo"><div class="logo-icon"><i class="ti ti-gas-station"></i></div><div><div class="logo-name">FuelManager</div><div class="logo-sub">Main Street Station</div></div></div>
+    <nav class="sidebar-nav">
+      <a href="index.html"       class="nav-link"><i class="ti ti-layout-dashboard"></i><span>Dashboard</span></a>
+      <a href="sales.html"       class="nav-link"><i class="ti ti-chart-bar"></i><span>Live Sales</span></a>
+      <a href="inventory.html"   class="nav-link"><i class="ti ti-box"></i><span>Inventory</span></a>
+      <a href="prices.html"      class="nav-link"><i class="ti ti-tag"></i><span>Prices</span></a>
+      <a href="delivery.html"    class="nav-link"><i class="ti ti-truck-delivery"></i><span>Deliveries</span></a>
+      <a href="timesheet.html"   class="nav-link"><i class="ti ti-clock"></i><span>Timesheet</span></a>
+      <a href="reports.html"     class="nav-link active"><i class="ti ti-file-text"></i><span>Reports</span></a>
+      <a href="downloads.html"   class="nav-link"><i class="ti ti-download"></i><span>Downloads</span></a>
+      <a href="suggestions.html" class="nav-link"><i class="ti ti-bulb"></i><span>Suggestions</span></a>
+    </nav>
+    <div class="sidebar-footer"><a href="#" class="nav-link"><i class="ti ti-settings"></i><span>Settings</span></a></div>
+  </aside>
+  <main class="main-content">
+    <div class="topbar">
+      <div><h1 class="topbar-title">Daily Reports</h1><div class="topbar-sub">Auto-generated from real transaction data</div></div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" onclick="genReport()"><i class="ti ti-refresh"></i> Generate today's report</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Report history</span>
+        <span style="font-size:12px;color:var(--text-3)">Last 30 days</span>
+      </div>
+      <div id="rep-loading" style="text-align:center;padding:2rem;color:var(--text-2)"><i class="ti ti-loader" style="animation:spin 1s linear infinite;font-size:22px"></i></div>
+      <table id="rep-table" style="display:none">
+        <thead><tr><th>Date</th><th>Gas</th><th>Lottery</th><th>Store</th><th>Total</th><th>Transactions</th><th>Gallons</th></tr></thead>
+        <tbody id="rep-tbody"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+<script type="module">
+import { getRecentReports, generateDailyReport, fmt$, fmtDate } from './js/db.js'
+
+async function loadReports() {
+  const { data } = await getRecentReports(30)
+  document.getElementById('rep-tbody').innerHTML = (data||[]).length ? data.map(r => `
+    <tr>
+      <td><strong>${fmtDate(r.report_date)}</strong></td>
+      <td>${fmt$(r.gas_total)}</td>
+      <td>${fmt$(r.lottery_total)}</td>
+      <td>${fmt$(r.store_total)}</td>
+      <td><strong>${fmt$(r.grand_total)}</strong></td>
+      <td>${r.total_transactions}</td>
+      <td>${parseFloat(r.gallons_sold||0).toFixed(1)}</td>
+    </tr>`).join('')
+  : '<tr><td colspan="7" style="text-align:center;color:var(--text-2);padding:1.5rem">No reports yet. Click "Generate today\'s report" to create one.</td></tr>'
+  document.getElementById('rep-loading').style.display = 'none'
+  document.getElementById('rep-table').style.display = 'table'
+}
+
+window.genReport = async () => {
+  const { data, error } = await generateDailyReport()
+  if (error) alert('Error: ' + error)
+  else { alert('Report generated for ' + data.report_date + '!'); loadReports() }
+}
+loadReports()
+</script>
+</body>
+</html>

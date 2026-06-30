@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deliveries — FuelManager</title>
+<link rel="stylesheet" href="css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-logo"><div class="logo-icon"><i class="ti ti-gas-station"></i></div><div><div class="logo-name">FuelManager</div><div class="logo-sub">Main Street Station</div></div></div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-link"><i class="ti ti-layout-dashboard"></i><span>Dashboard</span></a>
+      <a href="sales.html" class="nav-link"><i class="ti ti-chart-bar"></i><span>Live Sales</span></a>
+      <a href="inventory.html" class="nav-link"><i class="ti ti-box"></i><span>Inventory</span></a>
+      <a href="prices.html" class="nav-link"><i class="ti ti-tag"></i><span>Prices</span></a>
+      <a href="delivery.html" class="nav-link active"><i class="ti ti-truck-delivery"></i><span>Deliveries</span></a>
+      <a href="timesheet.html" class="nav-link"><i class="ti ti-clock"></i><span>Timesheet</span></a>
+      <a href="reports.html" class="nav-link"><i class="ti ti-file-text"></i><span>Reports</span></a>
+      <a href="downloads.html" class="nav-link"><i class="ti ti-download"></i><span>Downloads</span></a>
+      <a href="suggestions.html" class="nav-link"><i class="ti ti-bulb"></i><span>Suggestions</span></a>
+    </nav>
+    <div class="sidebar-footer"><a href="#" class="nav-link"><i class="ti ti-settings"></i><span>Settings</span></a></div>
+  </aside>
+  <main class="main-content">
+    <div class="topbar">
+      <div><h1 class="topbar-title">Delivery Intake</h1><div class="topbar-sub">Upload vendor invoices — AI reads UPCs, items, and prices automatically</div></div>
+      <div class="topbar-actions"><button class="btn btn-primary" onclick="showTab('upload')"><i class="ti ti-plus"></i> New delivery</button></div>
+    </div>
+
+    <div class="tab-row">
+      <button class="tab-btn active" id="tab-verify-btn" onclick="showTab('verify')">Verify items</button>
+      <button class="tab-btn" id="tab-upload-btn" onclick="showTab('upload')">New upload</button>
+      <button class="tab-btn" id="tab-history-btn" onclick="showTab('history')">History</button>
+    </div>
+
+    <!-- VERIFY TAB -->
+    <div id="tab-verify">
+      <div class="step-bar">
+        <div class="step done"><div class="step-num"><i class="ti ti-check" style="font-size:10px"></i></div>Select vendor</div>
+        <div class="step-line"></div>
+        <div class="step done"><div class="step-num"><i class="ti ti-check" style="font-size:10px"></i></div>Upload document</div>
+        <div class="step-line"></div>
+        <div class="step active"><div class="step-num">3</div>Verify items</div>
+        <div class="step-line"></div>
+        <div class="step"><div class="step-num">4</div>Submit</div>
+      </div>
+
+      <div class="scan-banner">
+        <i class="ti ti-sparkles" style="font-size:18px;color:var(--lottery);flex-shrink:0"></i>
+        <div><strong>AI scan complete</strong> — McLane_Invoice_052526.pdf read successfully. 18 items detected, 3 price changes flagged, 2 new items, 1 flagged UPC.</div>
+      </div>
+
+      <div class="card" style="padding:0.85rem 1.25rem;margin-bottom:0.75rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <i class="ti ti-file-type-pdf" style="font-size:24px;color:var(--red)"></i>
+            <div><div style="font-size:13px;font-weight:600">McLane_Invoice_052526.pdf</div><div style="font-size:11px;color:var(--text-3)">McLane Company · Delivery #MCL-88421 · May 25, 2026</div></div>
+          </div>
+          <div style="display:flex;gap:6px;"><button class="btn btn-sm"><i class="ti ti-eye"></i> View</button><button class="btn btn-sm"><i class="ti ti-refresh"></i> Re-scan</button></div>
+        </div>
+      </div>
+
+      <div class="summary-strip" style="margin-bottom:1rem;">
+        <div class="ss-seg"><div class="ss-val">18</div><div class="ss-lbl">Scanned</div></div>
+        <div class="ss-seg" style="background:var(--store-light)"><div class="ss-val" style="color:var(--store)">12</div><div class="ss-lbl" style="color:var(--store)">Matched</div></div>
+        <div class="ss-seg" style="background:var(--amber-light)"><div class="ss-val" style="color:var(--amber)">3</div><div class="ss-lbl" style="color:var(--amber)">Price chg</div></div>
+        <div class="ss-seg" style="background:var(--gas-light)"><div class="ss-val" style="color:var(--gas)">2</div><div class="ss-lbl" style="color:var(--gas)">New items</div></div>
+        <div class="ss-seg" style="background:var(--red-light)"><div class="ss-val" style="color:var(--red)">1</div><div class="ss-lbl" style="color:var(--red)">Flagged</div></div>
+      </div>
+
+      <div class="card" style="padding:0.85rem 0;">
+        <div class="card-header" style="padding:0 1.25rem 0.5rem;">
+          <span class="card-title">Verify every item — check then submit</span>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-sm btn-green" onclick="checkAll(true)"><i class="ti ti-checks"></i> Approve all</button>
+            <button class="btn btn-sm btn-red" onclick="checkAll(false)"><i class="ti ti-x"></i> Clear all</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+        <table>
+          <tr><th style="width:28px"><input type="checkbox" class="chk" id="chk-all" onchange="toggleAll(this)" checked></th><th>UPC / SKU</th><th>Item name</th><th>Category</th><th>Qty</th><th>Invoice $</th><th>Current $</th><th>Change</th><th>Status</th></tr>
+          <tr class="verify-row"><td><input type="checkbox" class="chk item-chk" checked onchange="updateSubmitCount()"></td><td><span class="upc-code">0-12546-00197-8</span></td><td>Coca-Cola 20oz</td><td>Beverages</td><td><input type="number" class="field-edit" value="48"></td><td>$1.29</td><td>$1.29</td><td><span class="price-same">No change</span></td><td><span class="badge b-match">Matched</span></td></tr>
+          <tr class="verify-row changed"><td><input type="checkbox" class="chk item-chk" checked onchange="updateSubmitCount()"></td><td><span class="upc-code">0-28400-47812-3</span></td><td>Lay's Chips 1oz</td><td>Snacks</td><td><input type="number" class="field-edit" value="36"></td><td>$0.99</td><td>$0.89</td><td><div class="price-arrow"><span class="price-old">$0.89</span><i class="ti ti-arrow-right" style="font-size:10px;color:var(--text-3)"></i><span class="price-up">$0.99 ↑</span></div></td><td><span class="badge b-change">Price up</span></td></tr>
+          <tr class="verify-row changed"><td><input type="checkbox" class="chk item-chk" checked onchange="updateSubmitCount()"></td><td><span class="upc-code">0-07800-40754-9</span></td><td>Red Bull 8.4oz</td><td>Beverages</td><td><input type="number" class="field-edit" value="24"></td><td>$2.49</td><td>$2.79</td><td><div class="price-arrow"><span class="price-old">$2.79</span><i class="ti ti-arrow-right" style="font-size:10px;color:var(--text-3)"></i><span class="price-down">$2.49 ↓</span></div></td><td><span class="badge b-change">Price down</span></td></tr>
+          <tr class="verify-row"><td><input type="checkbox" class="chk item-chk" checked onchange="updateSubmitCount()"></td><td><span class="upc-code">0-04000-01662-4</span></td><td>Snickers 1.86oz</td><td>Snacks</td><td><input type="number" class="field-edit" value="48"></td><td>$1.09</td><td>$1.09</td><td><span class="price-same">No change</span></td><td><span class="badge b-match">Matched</span></td></tr>
+          <tr class="verify-row changed"><td><input type="checkbox" class="chk item-chk" checked onchange="updateSubmitCount()"></td><td><span class="upc-code">0-01200-20014-5</span></td><td>Dasani Water 20oz</td><td>Beverages</td><td><input type="number" class="field-edit" value="36"></td><td>$1.49</td><td>$1.29</td><td><div class="price-arrow"><span class="price-old">$1.29</span><i class="ti ti-arrow-right" style="font-size:10px;color:var(--text-3)"></i><span class="price-up">$1.49 ↑</span></div></td><td><span class="badge b-change">Price up</span></td></tr>
+          <tr class="verify-row new-item"><td><input type="checkbox" class="chk item-chk" checked onchange="updateSubmitCount()"></td><td><span class="upc-code">0-08935-00067-4</span></td><td>Gatorade Zero 28oz</td><td><select class="field-edit" style="width:110px"><option>Beverages</option><option>Snacks</option></select></td><td><input type="number" class="field-edit" value="24"></td><td>$1.89</td><td style="color:var(--text-3)">Not in system</td><td><span style="color:var(--gas);font-size:11px">Will be added</span></td><td><span class="badge b-new">New item</span></td></tr>
+          <tr class="verify-row new-item"><td><input type="checkbox" class="chk item-chk" checked onchange="updateSubmitCount()"></td><td><span class="upc-code">0-07225-00722-9</span></td><td>Celsius Energy 12oz</td><td><select class="field-edit" style="width:110px"><option>Beverages</option><option>Snacks</option></select></td><td><input type="number" class="field-edit" value="24"></td><td>$2.29</td><td style="color:var(--text-3)">Not in system</td><td><span style="color:var(--gas);font-size:11px">Will be added</span></td><td><span class="badge b-new">New item</span></td></tr>
+          <tr class="verify-row flagged"><td><input type="checkbox" class="chk item-chk" onchange="updateSubmitCount()"></td><td><span class="upc-code">0-01111-09974-?</span></td><td><input type="text" class="field-edit" value="Unknown item" style="width:130px"></td><td><select class="field-edit" style="width:110px"><option>Beverages</option><option>Snacks</option><option>Auto</option></select></td><td><input type="number" class="field-edit" value="6"></td><td>$4.99</td><td style="color:var(--red)">Unreadable UPC</td><td><span style="color:var(--red);font-size:11px">Manual fix needed</span></td><td><span class="badge b-alert">Flagged</span></td></tr>
+          <tr class="verify-row"><td><input type="checkbox" class="chk item-chk" checked onchange="updateSubmitCount()"></td><td><span class="upc-code">0-07874-20502-2</span></td><td>Marlboro Red King</td><td>Tobacco</td><td><input type="number" class="field-edit" value="10"></td><td>$9.89</td><td>$9.89</td><td><span class="price-same">No change</span></td><td><span class="badge b-match">Matched</span></td></tr>
+          <tr class="verify-row"><td><input type="checkbox" class="chk item-chk" checked onchange="updateSubmitCount()"></td><td><span class="upc-code">0-04963-30222-1</span></td><td>Pennzoil 5W-30 1qt</td><td>Auto</td><td><input type="number" class="field-edit" value="12"></td><td>$7.49</td><td>$7.49</td><td><span class="price-same">No change</span></td><td><span class="badge b-match">Matched</span></td></tr>
+        </table>
+        </div>
+      </div>
+
+      <div class="success-banner">
+        <div class="sb-title"><i class="ti ti-circle-check"></i>Ready to submit — <span id="submit-count">17 of 18 items approved</span></div>
+        <div class="sb-desc">Submitting will update inventory quantities, apply price changes, add new items, and save this delivery to history.</div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:1.5rem;">
+        <button class="btn btn-green" onclick="submitDelivery()" style="font-size:13px;padding:9px 20px;"><i class="ti ti-check"></i> Submit &amp; update inventory</button>
+        <button class="btn btn-amber" style="font-size:13px;" onclick="showToast('Draft saved!')"><i class="ti ti-device-floppy"></i> Save draft</button>
+        <button class="btn" onclick="showToast('Discarded.')"><i class="ti ti-x"></i> Discard</button>
+      </div>
+    </div>
+
+    <!-- UPLOAD TAB -->
+    <div id="tab-upload" style="display:none;">
+      <div style="margin-bottom:1rem;">
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:0.6rem;">1. Select vendor</div>
+        <div class="vendor-grid">
+          <div class="vendor-card selected" onclick="selectVendor(this)"><div class="vc-name">McLane Company</div><div class="vc-sub">Snacks, beverages, tobacco</div><div class="vc-badge vcb-store">Store items</div></div>
+          <div class="vendor-card" onclick="selectVendor(this)"><div class="vc-name">Core-Mark</div><div class="vc-sub">Candy, snacks, beverages</div><div class="vc-badge vcb-store">Store items</div></div>
+          <div class="vendor-card" onclick="selectVendor(this)"><div class="vc-name">Petroleum Dist. Inc.</div><div class="vc-sub">Regular, plus, premium, diesel</div><div class="vc-badge vcb-fuel">Fuel</div></div>
+          <div class="vendor-card" onclick="selectVendor(this)"><div class="vc-name">Eby-Brown</div><div class="vc-sub">General c-store merchandise</div><div class="vc-badge vcb-store">Store items</div></div>
+          <div class="vendor-card" onclick="selectVendor(this)"><div class="vc-name">AMSCAN / IGT</div><div class="vc-sub">Scratch tickets, lotto supplies</div><div class="vc-badge vcb-lot">Lottery</div></div>
+          <div class="vendor-card" onclick="selectVendor(this)"><div class="vc-name">AutoZone Pro</div><div class="vc-sub">Motor oil, fluids, accessories</div><div class="vc-badge vcb-auto">Auto</div></div>
+        </div>
+        <button class="btn btn-sm" onclick="showToast('Add vendor form coming soon!')"><i class="ti ti-plus"></i> Add new vendor</button>
+      </div>
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:0.6rem;">2. Upload delivery document</div>
+        <div class="upload-zone" onclick="fakeUpload()">
+          <div class="upload-icon"><i class="ti ti-cloud-upload"></i></div>
+          <div class="upload-title">Drop your file here or tap to browse</div>
+          <div class="upload-sub">AI reads every UPC, item, quantity, and price automatically</div>
+          <div class="format-pills">
+            <span class="fpill fp-img"><i class="ti ti-photo"></i> Photo / JPG / PNG</span>
+            <span class="fpill fp-pdf"><i class="ti ti-file-type-pdf"></i> PDF</span>
+            <span class="fpill fp-xls"><i class="ti ti-table"></i> Excel / XLSX</span>
+            <span class="fpill fp-csv"><i class="ti ti-file-type-csv"></i> CSV</span>
+          </div>
+        </div>
+        <p style="font-size:11px;color:var(--text-3);text-align:center;">Supported: JPG, PNG, HEIC, PDF, XLSX, XLS, CSV · Max 25MB · Multiple files allowed</p>
+      </div>
+    </div>
+
+    <!-- HISTORY TAB -->
+    <div id="tab-history" style="display:none;">
+      <div class="card">
+        <div class="card-header"><span class="card-title">Delivery history</span><button class="btn btn-sm" onclick="showToast('Export downloaded!')"><i class="ti ti-download"></i> Export log</button></div>
+        <div class="history-row"><i class="ti ti-file-type-pdf hr-icon" style="color:var(--red)"></i><div><div class="hr-name">McLane Company — Invoice MCL-88421</div><div class="hr-sub">18 items · 3 price updates · 2 new items added</div></div><span class="badge b-match" style="margin-left:8px">Submitted</span><span class="hr-date">May 25, 2026</span></div>
+        <div class="history-row"><i class="ti ti-table hr-icon" style="color:var(--store)"></i><div><div class="hr-name">Petroleum Dist. Inc. — Fuel delivery FD-2241</div><div class="hr-sub">Regular 5,000 gal · Premium 3,000 gal · Diesel 4,000 gal</div></div><span class="badge b-match">Submitted</span><span class="hr-date">May 22, 2026</span></div>
+        <div class="history-row"><i class="ti ti-photo hr-icon" style="color:var(--lottery)"></i><div><div class="hr-name">Core-Mark — Invoice CM-19834</div><div class="hr-sub">24 items · 1 price update</div></div><span class="badge b-match">Submitted</span><span class="hr-date">May 18, 2026</span></div>
+        <div class="history-row"><i class="ti ti-file-type-pdf hr-icon" style="color:var(--red)"></i><div><div class="hr-name">AMSCAN / IGT — Lottery restock LS-0441</div><div class="hr-sub">$2 scratch 10 books · $5 scratch 6 books</div></div><span class="badge b-match">Submitted</span><span class="hr-date">May 15, 2026</span></div>
+        <div class="history-row"><i class="ti ti-table hr-icon" style="color:var(--amber)"></i><div><div class="hr-name">AutoZone Pro — Invoice AZ-77021</div><div class="hr-sub">Motor oil 24 units · Windshield fluid 12 units</div></div><span class="badge b-alert">1 item flagged</span><span class="hr-date">May 10, 2026</span></div>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="js/app.js"></script>
+<script>
+function showTab(name) {
+  ['verify','upload','history'].forEach(t => {
+    document.getElementById('tab-' + t).style.display = t === name ? 'block' : 'none';
+    const btn = document.getElementById('tab-' + t + '-btn');
+    if (btn) btn.classList.toggle('active', t === name);
+  });
+}
+updateSubmitCount();
+</script>
+</body>
+</html>

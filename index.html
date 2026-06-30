@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FuelManager — Dashboard</title>
+<link rel="stylesheet" href="css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon"><i class="ti ti-gas-station"></i></div>
+      <div><div class="logo-name">FuelManager</div><div class="logo-sub">Main Street Station</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html"       class="nav-link active"><i class="ti ti-layout-dashboard"></i><span>Dashboard</span></a>
+      <a href="sales.html"       class="nav-link"><i class="ti ti-chart-bar"></i><span>Live Sales</span></a>
+      <a href="inventory.html"   class="nav-link"><i class="ti ti-box"></i><span>Inventory</span></a>
+      <a href="prices.html"      class="nav-link"><i class="ti ti-tag"></i><span>Prices</span></a>
+      <a href="delivery.html"    class="nav-link"><i class="ti ti-truck-delivery"></i><span>Deliveries</span></a>
+      <a href="timesheet.html"   class="nav-link"><i class="ti ti-clock"></i><span>Timesheet</span></a>
+      <a href="reports.html"     class="nav-link"><i class="ti ti-file-text"></i><span>Reports</span></a>
+      <a href="downloads.html"   class="nav-link"><i class="ti ti-download"></i><span>Downloads</span></a>
+      <a href="suggestions.html" class="nav-link"><i class="ti ti-bulb"></i><span>Suggestions</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="#" class="nav-link"><i class="ti ti-settings"></i><span>Settings</span></a>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="topbar">
+      <div>
+        <h1 class="topbar-title">Dashboard</h1>
+        <div class="topbar-sub" id="today-date">Loading...</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-outline" onclick="loadDashboard()"><i class="ti ti-refresh"></i> Refresh</button>
+        <button class="btn btn-primary" onclick="exportToday()"><i class="ti ti-download"></i> Export today</button>
+      </div>
+    </div>
+
+    <!-- LOADING STATE -->
+    <div id="loading-state" style="text-align:center;padding:3rem;color:var(--text-2)">
+      <i class="ti ti-loader" style="font-size:32px;animation:spin 1s linear infinite"></i>
+      <div style="margin-top:.75rem;font-size:14px">Loading live data from database...</div>
+    </div>
+
+    <!-- CONTENT (hidden until data loads) -->
+    <div id="dashboard-content" style="display:none">
+
+      <!-- TOTAL BANNER -->
+      <div class="revenue-banner">
+        <div class="rb-left">
+          <div class="rb-label">Total revenue today</div>
+          <div class="rb-value" id="grand-total">$0.00</div>
+          <div class="rb-breakdown">
+            <span class="rb-seg gas"><span class="dot-gas"></span>Gas <span id="gas-total-sm">$0</span></span>
+            <span class="rb-seg lottery"><span class="dot-lottery"></span>Lottery <span id="lottery-total-sm">$0</span></span>
+            <span class="rb-seg store"><span class="dot-store"></span>Store <span id="store-total-sm">$0</span></span>
+          </div>
+        </div>
+        <div class="rb-right">
+          <div class="rb-change-label">Total transactions</div>
+          <div class="rb-change" id="txn-count" style="color:var(--text)">0</div>
+          <div class="rb-txn" id="gallons-sold">0 gallons pumped</div>
+        </div>
+      </div>
+
+      <!-- GAS -->
+      <div class="section-label"><span class="dot-gas"></span>Gas sales</div>
+      <div class="metrics-grid cols-4">
+        <div class="metric-card mc-gas"><div class="mc-label">Gas revenue</div><div class="mc-value" id="gas-total">$0.00</div></div>
+        <div class="metric-card mc-gas"><div class="mc-label">Gallons sold</div><div class="mc-value" id="gas-gallons">0</div></div>
+        <div class="metric-card mc-gas"><div class="mc-label">Transactions</div><div class="mc-value" id="gas-count">0</div></div>
+        <div class="metric-card mc-gas"><div class="mc-label">Avg per fill-up</div><div class="mc-value" id="gas-avg">$0.00</div></div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- LOTTERY -->
+      <div class="section-label"><span class="dot-lottery"></span>Lottery sales</div>
+      <div class="metrics-grid cols-3">
+        <div class="metric-card mc-lottery"><div class="mc-label">Lottery revenue</div><div class="mc-value" id="lottery-total">$0.00</div></div>
+        <div class="metric-card mc-lottery"><div class="mc-label">Tickets sold</div><div class="mc-value" id="lottery-count">0</div></div>
+        <div class="metric-card mc-lottery"><div class="mc-label">Avg ticket sale</div><div class="mc-value" id="lottery-avg">$0.00</div></div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- STORE -->
+      <div class="section-label"><span class="dot-store"></span>Inside store sales</div>
+      <div class="metrics-grid cols-3">
+        <div class="metric-card mc-store"><div class="mc-label">Store revenue</div><div class="mc-value" id="store-total">$0.00</div></div>
+        <div class="metric-card mc-store"><div class="mc-label">Items sold</div><div class="mc-value" id="store-count">0</div></div>
+        <div class="metric-card mc-store"><div class="mc-label">Avg per sale</div><div class="mc-value" id="store-avg">$0.00</div></div>
+      </div>
+
+      <!-- RECENT TRANSACTIONS -->
+      <div class="card" style="margin-top:1rem">
+        <div class="card-header">
+          <span class="card-title">Recent transactions</span>
+          <span class="badge b-live"><span class="live-dot"></span>&nbsp;Live</span>
+        </div>
+        <table>
+          <tr><th>Time</th><th>Type</th><th>Detail</th><th>Amount</th><th>Payment</th></tr>
+          <tbody id="recent-txns">
+            <tr><td colspan="5" style="text-align:center;color:var(--text-2);padding:1.5rem">No transactions yet today</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div><!-- end dashboard-content -->
+
+    <!-- ERROR STATE -->
+    <div id="error-state" style="display:none;text-align:center;padding:3rem">
+      <i class="ti ti-alert-circle" style="font-size:32px;color:var(--red)"></i>
+      <div style="margin-top:.75rem;font-size:14px;color:var(--text-2)">Could not connect to database.</div>
+      <div style="font-size:12px;color:var(--text-3);margin-top:.5rem">Check your Supabase URL and key in js/supabase.js</div>
+      <button class="btn btn-primary" style="margin-top:1rem" onclick="loadDashboard()"><i class="ti ti-refresh"></i> Retry</button>
+    </div>
+  </main>
+</div>
+
+<style>
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+
+<script type="module">
+import { getTodaySales, getTodayTotals, fmt$, fmtTime } from './js/db.js'
+
+async function loadDashboard() {
+  document.getElementById('loading-state').style.display = 'block'
+  document.getElementById('dashboard-content').style.display = 'none'
+  document.getElementById('error-state').style.display = 'none'
+
+  // Set today's date
+  document.getElementById('today-date').innerHTML =
+    '<span class="live-dot"></span>&nbsp;' +
+    new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' }) +
+    ' &nbsp;·&nbsp; Live'
+
+  try {
+    const [{ data: totals, error: totErr }, { gas, lottery, store, errors }] = await Promise.all([
+      getTodayTotals(),
+      getTodaySales()
+    ])
+
+    if (totErr || errors.length) throw new Error('DB error')
+
+    // Totals banner
+    document.getElementById('grand-total').textContent      = fmt$(totals.grand_total)
+    document.getElementById('gas-total-sm').textContent     = fmt$(totals.gas_total)
+    document.getElementById('lottery-total-sm').textContent = fmt$(totals.lottery_total)
+    document.getElementById('store-total-sm').textContent   = fmt$(totals.store_total)
+    document.getElementById('txn-count').textContent        = totals.total_transactions
+    document.getElementById('gallons-sold').textContent     = parseFloat(totals.total_gallons || 0).toFixed(1) + ' gallons pumped'
+
+    // Gas metrics
+    const gasRev = parseFloat(totals.gas_total || 0)
+    document.getElementById('gas-total').textContent   = fmt$(gasRev)
+    document.getElementById('gas-gallons').textContent = parseFloat(totals.total_gallons || 0).toFixed(1)
+    document.getElementById('gas-count').textContent   = gas.length
+    document.getElementById('gas-avg').textContent     = gas.length ? fmt$(gasRev / gas.length) : '$0.00'
+
+    // Lottery metrics
+    const lotRev = parseFloat(totals.lottery_total || 0)
+    const lotQty = lottery.reduce((s, r) => s + (r.quantity || 1), 0)
+    document.getElementById('lottery-total').textContent = fmt$(lotRev)
+    document.getElementById('lottery-count').textContent = lotQty
+    document.getElementById('lottery-avg').textContent   = lottery.length ? fmt$(lotRev / lottery.length) : '$0.00'
+
+    // Store metrics
+    const strRev = parseFloat(totals.store_total || 0)
+    const strQty = store.reduce((s, r) => s + (r.quantity || 1), 0)
+    document.getElementById('store-total').textContent = fmt$(strRev)
+    document.getElementById('store-count').textContent = strQty
+    document.getElementById('store-avg').textContent   = store.length ? fmt$(strRev / store.length) : '$0.00'
+
+    // Recent transactions (last 10 combined)
+    const all = [
+      ...gas.map(s     => ({ ...s, _type: 'gas' })),
+      ...lottery.map(s => ({ ...s, _type: 'lottery' })),
+      ...store.map(s   => ({ ...s, _type: 'store' }))
+    ].sort((a, b) => new Date(b.sold_at) - new Date(a.sold_at)).slice(0, 10)
+
+    const tbody = document.getElementById('recent-txns')
+    if (all.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-2);padding:1.5rem">No transactions yet today</td></tr>'
+    } else {
+      tbody.innerHTML = all.map(s => {
+        const typeColors = { gas: 'b-gas', lottery: 'b-lottery', store: 'b-store' }
+        const typeLabels = { gas: 'Gas', lottery: 'Lottery', store: 'Store' }
+        let detail = ''
+        if (s._type === 'gas')     detail = `Pump ${s.pump_number} — ${s.fuel_type} ${parseFloat(s.gallons).toFixed(1)} gal`
+        if (s._type === 'lottery') detail = `${s.ticket_type.replace('_',' ')} × ${s.quantity}`
+        if (s._type === 'store')   detail = `${s.item_name} × ${s.quantity}`
+        return `<tr>
+          <td>${fmtTime(s.sold_at)}</td>
+          <td><span class="badge ${typeColors[s._type]}">${typeLabels[s._type]}</span></td>
+          <td>${detail}</td>
+          <td>${fmt$(s.total_amount)}</td>
+          <td style="text-transform:capitalize">${s.payment_method}</td>
+        </tr>`
+      }).join('')
+    }
+
+    document.getElementById('loading-state').style.display = 'none'
+    document.getElementById('dashboard-content').style.display = 'block'
+
+  } catch (e) {
+    console.error(e)
+    document.getElementById('loading-state').style.display = 'none'
+    document.getElementById('error-state').style.display = 'block'
+  }
+}
+
+window.loadDashboard = loadDashboard
+window.exportToday = () => alert('Export feature: download as PDF or CSV from the Downloads page')
+
+loadDashboard()
+// Auto-refresh every 60 seconds
+setInterval(loadDashboard, 60000)
+</script>
+</body>
+</html>

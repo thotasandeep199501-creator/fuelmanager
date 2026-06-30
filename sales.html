@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live Sales — FuelManager</title>
+<link rel="stylesheet" href="css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-logo"><div class="logo-icon"><i class="ti ti-gas-station"></i></div><div><div class="logo-name">FuelManager</div><div class="logo-sub">Main Street Station</div></div></div>
+    <nav class="sidebar-nav">
+      <a href="index.html"       class="nav-link"><i class="ti ti-layout-dashboard"></i><span>Dashboard</span></a>
+      <a href="sales.html"       class="nav-link active"><i class="ti ti-chart-bar"></i><span>Live Sales</span></a>
+      <a href="inventory.html"   class="nav-link"><i class="ti ti-box"></i><span>Inventory</span></a>
+      <a href="prices.html"      class="nav-link"><i class="ti ti-tag"></i><span>Prices</span></a>
+      <a href="delivery.html"    class="nav-link"><i class="ti ti-truck-delivery"></i><span>Deliveries</span></a>
+      <a href="timesheet.html"   class="nav-link"><i class="ti ti-clock"></i><span>Timesheet</span></a>
+      <a href="reports.html"     class="nav-link"><i class="ti ti-file-text"></i><span>Reports</span></a>
+      <a href="downloads.html"   class="nav-link"><i class="ti ti-download"></i><span>Downloads</span></a>
+      <a href="suggestions.html" class="nav-link"><i class="ti ti-bulb"></i><span>Suggestions</span></a>
+    </nav>
+    <div class="sidebar-footer"><a href="#" class="nav-link"><i class="ti ti-settings"></i><span>Settings</span></a></div>
+  </aside>
+  <main class="main-content">
+    <div class="topbar">
+      <div>
+        <h1 class="topbar-title">Live Sales</h1>
+        <div class="topbar-sub"><span class="live-dot"></span>&nbsp;Open to now &nbsp;·&nbsp; <strong id="live-clock"></strong></div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-outline" onclick="loadSales()"><i class="ti ti-refresh"></i> Refresh</button>
+      </div>
+    </div>
+
+    <!-- SUMMARY STRIP -->
+    <div class="summary-strip">
+      <div class="ss-seg"><div class="ss-val" id="s-grand">$0</div><div class="ss-lbl">Total since open</div></div>
+      <div class="ss-seg ss-gas"><div class="ss-val" id="s-gas" style="color:var(--gas)">$0</div><div class="ss-lbl" style="color:var(--gas)">Gas</div></div>
+      <div class="ss-seg ss-lottery"><div class="ss-val" id="s-lot" style="color:var(--lottery)">$0</div><div class="ss-lbl" style="color:var(--lottery)">Lottery</div></div>
+      <div class="ss-seg ss-store"><div class="ss-val" id="s-str" style="color:var(--store)">$0</div><div class="ss-lbl" style="color:var(--store)">Store</div></div>
+      <div class="ss-seg"><div class="ss-val" id="s-txn">0</div><div class="ss-lbl">Transactions</div></div>
+    </div>
+
+    <!-- FILTER -->
+    <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center;">
+      <span style="font-size:12px;color:var(--text-3)">Filter:</span>
+      <button class="btn btn-sm filter-btn active" id="f-all" onclick="filterTxns('all',this)">All</button>
+      <button class="btn btn-sm filter-btn" id="f-gas" onclick="filterTxns('gas',this)" style="background:var(--gas-light);color:var(--gas-dark);border-color:var(--gas)">Gas</button>
+      <button class="btn btn-sm filter-btn" id="f-lottery" onclick="filterTxns('lottery',this)" style="background:var(--lottery-light);color:var(--lottery-dark);border-color:var(--lottery)">Lottery</button>
+      <button class="btn btn-sm filter-btn" id="f-store" onclick="filterTxns('store',this)" style="background:var(--store-light);color:var(--store-dark);border-color:var(--store)">Store</button>
+    </div>
+
+    <!-- TRANSACTION TABLE -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">All transactions — open to now</span>
+        <span class="badge b-live"><span class="live-dot"></span>&nbsp;Live</span>
+      </div>
+      <div id="loading-sales" style="text-align:center;padding:2rem;color:var(--text-2)">
+        <i class="ti ti-loader" style="animation:spin 1s linear infinite;font-size:22px"></i>
+      </div>
+      <table id="sales-table" style="display:none">
+        <thead><tr><th>Time</th><th>Type</th><th>Detail</th><th>Amount</th><th>Payment</th></tr></thead>
+        <tbody id="sales-tbody"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+<script type="module">
+import { getTodaySales, getTodayTotals, fmt$, fmtTime, subscribeToSales } from './js/db.js'
+
+let allRows = []
+let channel = null
+
+async function loadSales() {
+  document.getElementById('loading-sales').style.display = 'block'
+  document.getElementById('sales-table').style.display = 'none'
+
+  const [{ data: totals }, { gas, lottery, store }] = await Promise.all([
+    getTodayTotals(), getTodaySales()
+  ])
+
+  // Summary strip
+  document.getElementById('s-grand').textContent = fmt$(totals?.grand_total   || 0)
+  document.getElementById('s-gas').textContent   = fmt$(totals?.gas_total     || 0)
+  document.getElementById('s-lot').textContent   = fmt$(totals?.lottery_total || 0)
+  document.getElementById('s-str').textContent   = fmt$(totals?.store_total   || 0)
+  document.getElementById('s-txn').textContent   = totals?.total_transactions || 0
+
+  allRows = [
+    ...gas.map(s     => ({ ...s, _type:'gas' })),
+    ...lottery.map(s => ({ ...s, _type:'lottery' })),
+    ...store.map(s   => ({ ...s, _type:'store' }))
+  ].sort((a,b) => new Date(b.sold_at) - new Date(a.sold_at))
+
+  renderTable(allRows)
+  document.getElementById('loading-sales').style.display = 'none'
+  document.getElementById('sales-table').style.display = 'table'
+}
+
+function renderTable(rows) {
+  const labels = { gas:'Gas', lottery:'Lottery', store:'Store' }
+  const colors = { gas:'b-gas', lottery:'b-lottery', store:'b-store' }
+  document.getElementById('sales-tbody').innerHTML = rows.length ? rows.map(s => {
+    let detail = ''
+    if (s._type==='gas')     detail = `Pump ${s.pump_number} — ${s.fuel_type} ${parseFloat(s.gallons).toFixed(1)} gal`
+    if (s._type==='lottery') detail = `${s.ticket_type?.replace('_',' ')} × ${s.quantity}`
+    if (s._type==='store')   detail = `${s.item_name} × ${s.quantity}`
+    return `<tr data-type="${s._type}">
+      <td>${fmtTime(s.sold_at)}</td>
+      <td><span class="badge ${colors[s._type]}">${labels[s._type]}</span></td>
+      <td>${detail}</td>
+      <td>${fmt$(s.total_amount)}</td>
+      <td style="text-transform:capitalize">${s.payment_method}</td>
+    </tr>`
+  }).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--text-2);padding:1.5rem">No transactions yet today</td></tr>'
+}
+
+window.filterTxns = (type, btn) => {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'))
+  btn.classList.add('active')
+  renderTable(type==='all' ? allRows : allRows.filter(r => r._type===type))
+}
+
+// Live clock
+function tick() {
+  const now = new Date()
+  const h = now.getHours()%12||12, m = String(now.getMinutes()).padStart(2,'0')
+  const s = String(now.getSeconds()).padStart(2,'0'), ap = now.getHours()>=12?'PM':'AM'
+  document.getElementById('live-clock').textContent = `${h}:${m}:${s} ${ap}`
+}
+setInterval(tick, 1000); tick()
+
+// Real-time: reload when new sale comes in
+channel = subscribeToSales(() => loadSales())
+window.addEventListener('beforeunload', () => { if(channel) channel.unsubscribe() })
+
+loadSales()
+</script>
+</body>
+</html>

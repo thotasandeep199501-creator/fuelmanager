@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Timesheet — FuelManager</title>
+<link rel="stylesheet" href="css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-logo"><div class="logo-icon"><i class="ti ti-gas-station"></i></div><div><div class="logo-name">FuelManager</div><div class="logo-sub">Main Street Station</div></div></div>
+    <nav class="sidebar-nav">
+      <a href="index.html"       class="nav-link"><i class="ti ti-layout-dashboard"></i><span>Dashboard</span></a>
+      <a href="sales.html"       class="nav-link"><i class="ti ti-chart-bar"></i><span>Live Sales</span></a>
+      <a href="inventory.html"   class="nav-link"><i class="ti ti-box"></i><span>Inventory</span></a>
+      <a href="prices.html"      class="nav-link"><i class="ti ti-tag"></i><span>Prices</span></a>
+      <a href="delivery.html"    class="nav-link"><i class="ti ti-truck-delivery"></i><span>Deliveries</span></a>
+      <a href="timesheet.html"   class="nav-link active"><i class="ti ti-clock"></i><span>Timesheet</span></a>
+      <a href="reports.html"     class="nav-link"><i class="ti ti-file-text"></i><span>Reports</span></a>
+      <a href="downloads.html"   class="nav-link"><i class="ti ti-download"></i><span>Downloads</span></a>
+      <a href="suggestions.html" class="nav-link"><i class="ti ti-bulb"></i><span>Suggestions</span></a>
+    </nav>
+    <div class="sidebar-footer"><a href="#" class="nav-link"><i class="ti ti-settings"></i><span>Settings</span></a></div>
+  </aside>
+  <main class="main-content">
+    <div class="topbar">
+      <div><h1 class="topbar-title">Timesheet</h1><div class="topbar-sub">Live clock-ins from database</div></div>
+      <div class="topbar-actions">
+        <button class="btn btn-green" onclick="doClock('in')"><i class="ti ti-login"></i> Clock in</button>
+        <button class="btn btn-red"   onclick="doClock('out')"><i class="ti ti-logout"></i> Clock out</button>
+      </div>
+    </div>
+
+    <!-- ON SHIFT NOW -->
+    <div class="section-label"><span class="live-dot"></span>&nbsp;Currently on shift</div>
+    <div class="card" style="margin-bottom:1rem">
+      <div id="shift-loading" style="text-align:center;padding:1.5rem;color:var(--text-2)"><i class="ti ti-loader" style="animation:spin 1s linear infinite;font-size:20px"></i></div>
+      <table id="shift-table" style="display:none">
+        <thead><tr><th>Employee</th><th>Role</th><th>Clocked in</th><th>Hours so far</th></tr></thead>
+        <tbody id="shift-tbody"></tbody>
+      </table>
+    </div>
+
+    <!-- TODAY'S LOG -->
+    <div class="section-label">Today's full log</div>
+    <div class="card">
+      <div id="log-loading" style="text-align:center;padding:1.5rem;color:var(--text-2)"><i class="ti ti-loader" style="animation:spin 1s linear infinite;font-size:20px"></i></div>
+      <table id="log-table" style="display:none">
+        <thead><tr><th>Employee</th><th>Role</th><th>Clock in</th><th>Clock out</th><th>Hours</th></tr></thead>
+        <tbody id="log-tbody"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+<script type="module">
+import { getCurrentShift, getTodayTimeEntries, getEmployees, clockIn, clockOut, fmtTime } from './js/db.js'
+
+async function loadTimesheet() {
+  // Current shift
+  const { data: onShift } = await getCurrentShift()
+  document.getElementById('shift-tbody').innerHTML = (onShift||[]).length
+    ? onShift.map(e => `<tr>
+        <td><strong>${e.name}</strong></td>
+        <td style="text-transform:capitalize">${e.role}</td>
+        <td>${fmtTime(e.clock_in)}</td>
+        <td><span class="badge ${parseFloat(e.hours_so_far)>8 ? 'b-change':'b-ok'}">${parseFloat(e.hours_so_far).toFixed(1)}h ${parseFloat(e.hours_so_far)>8?'OT':''}</span></td>
+      </tr>`).join('')
+    : '<tr><td colspan="4" style="text-align:center;color:var(--text-2);padding:1rem">No one currently clocked in</td></tr>'
+  document.getElementById('shift-loading').style.display = 'none'
+  document.getElementById('shift-table').style.display = 'table'
+
+  // Today's log
+  const { data: entries } = await getTodayTimeEntries()
+  document.getElementById('log-tbody').innerHTML = (entries||[]).length
+    ? entries.map(e => `<tr>
+        <td><strong>${e.employees?.name || 'Unknown'}</strong></td>
+        <td style="text-transform:capitalize">${e.employees?.role || '—'}</td>
+        <td>${fmtTime(e.clock_in)}</td>
+        <td>${e.clock_out ? fmtTime(e.clock_out) : '<span class="badge b-ok">On shift</span>'}</td>
+        <td>${e.hours_worked != null ? parseFloat(e.hours_worked).toFixed(2) + 'h' : '—'}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="5" style="text-align:center;color:var(--text-2);padding:1rem">No entries today yet</td></tr>'
+  document.getElementById('log-loading').style.display = 'none'
+  document.getElementById('log-table').style.display = 'table'
+}
+
+window.doClock = async (direction) => {
+  const { data: employees } = await getEmployees()
+  if (!employees?.length) { alert('No employees found. Add employees in Supabase first.'); return }
+  const names = employees.map((e,i) => `${i+1}. ${e.name} (${e.role})`).join('\n')
+  const choice = prompt('Select employee number:\n\n' + names)
+  if (!choice) return
+  const emp = employees[parseInt(choice)-1]
+  if (!emp) { alert('Invalid selection'); return }
+
+  if (direction === 'in') {
+    const { error } = await clockIn(emp.id)
+    if (error) alert('Error: ' + error.message)
+    else { alert(emp.name + ' clocked IN at ' + new Date().toLocaleTimeString()); loadTimesheet() }
+  } else {
+    // Find open entry
+    const { data: entries } = await getTodayTimeEntries()
+    const open = entries?.find(e => e.employees?.name === emp.name && !e.clock_out)
+    if (!open) { alert(emp.name + ' is not currently clocked in.'); return }
+    const { error } = await clockOut(open.id)
+    if (error) alert('Error: ' + error.message)
+    else { alert(emp.name + ' clocked OUT at ' + new Date().toLocaleTimeString()); loadTimesheet() }
+  }
+}
+
+loadTimesheet()
+setInterval(loadTimesheet, 30000)
+</script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prices — FuelManager</title>
+<link rel="stylesheet" href="css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-logo"><div class="logo-icon"><i class="ti ti-gas-station"></i></div><div><div class="logo-name">FuelManager</div><div class="logo-sub">Main Street Station</div></div></div>
+    <nav class="sidebar-nav">
+      <a href="index.html"       class="nav-link"><i class="ti ti-layout-dashboard"></i><span>Dashboard</span></a>
+      <a href="sales.html"       class="nav-link"><i class="ti ti-chart-bar"></i><span>Live Sales</span></a>
+      <a href="inventory.html"   class="nav-link"><i class="ti ti-box"></i><span>Inventory</span></a>
+      <a href="prices.html"      class="nav-link active"><i class="ti ti-tag"></i><span>Prices</span></a>
+      <a href="delivery.html"    class="nav-link"><i class="ti ti-truck-delivery"></i><span>Deliveries</span></a>
+      <a href="timesheet.html"   class="nav-link"><i class="ti ti-clock"></i><span>Timesheet</span></a>
+      <a href="reports.html"     class="nav-link"><i class="ti ti-file-text"></i><span>Reports</span></a>
+      <a href="downloads.html"   class="nav-link"><i class="ti ti-download"></i><span>Downloads</span></a>
+      <a href="suggestions.html" class="nav-link"><i class="ti ti-bulb"></i><span>Suggestions</span></a>
+    </nav>
+    <div class="sidebar-footer"><a href="#" class="nav-link"><i class="ti ti-settings"></i><span>Settings</span></a></div>
+  </aside>
+  <main class="main-content">
+    <div class="topbar">
+      <div><h1 class="topbar-title">Price Management</h1><div class="topbar-sub">Current prices loaded from database</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Current fuel prices — edit and save</div>
+      <div class="price-grid" id="price-grid">
+        <div style="text-align:center;padding:2rem;grid-column:span 4;color:var(--text-2)"><i class="ti ti-loader" style="animation:spin 1s linear infinite;font-size:22px"></i></div>
+      </div>
+      <div style="margin-top:1rem;display:flex;gap:8px;">
+        <button class="btn btn-primary" onclick="savePrices()"><i class="ti ti-check"></i> Save price changes</button>
+        <button class="btn btn-outline" onclick="loadPrices()"><i class="ti ti-refresh"></i> Reload</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Price change history</div>
+      <div id="history-loading" style="text-align:center;padding:2rem;color:var(--text-2)"><i class="ti ti-loader" style="animation:spin 1s linear infinite;font-size:22px"></i></div>
+      <table id="history-table" style="display:none">
+        <thead><tr><th>Date</th><th>Fuel type</th><th>Price</th><th>Changed by</th><th>Notes</th></tr></thead>
+        <tbody id="history-tbody"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+<script type="module">
+import { getCurrentPrices, updateFuelPrice, getPriceHistory, fmt$, fmtDate } from './js/db.js'
+
+const FUELS = ['regular','plus','premium','diesel']
+let currentPrices = {}
+
+async function loadPrices() {
+  const { data, error } = await getCurrentPrices()
+  if (error) { alert('Error: ' + error.message); return }
+  currentPrices = data || {}
+
+  document.getElementById('price-grid').innerHTML = FUELS.map(f => {
+    const price = currentPrices[f]?.price_per_gallon || '0.000'
+    const labels = { regular:'Regular (87)', plus:'Plus (89)', premium:'Premium (93)', diesel:'Diesel' }
+    return `<div class="price-box">
+      <div class="price-type">${labels[f]}</div>
+      <div class="price-val">$${parseFloat(price).toFixed(2)}</div>
+      <input class="price-input" type="number" id="p-${f}" value="${parseFloat(price).toFixed(3)}" step="0.001" min="0">
+    </div>`
+  }).join('')
+
+  // History
+  const { data: hist } = await getPriceHistory()
+  document.getElementById('history-tbody').innerHTML = (hist||[]).map(h => `
+    <tr>
+      <td>${fmtDate(h.effective_from)}</td>
+      <td style="text-transform:capitalize">${h.fuel_type}</td>
+      <td>$${parseFloat(h.price_per_gallon).toFixed(3)}</td>
+      <td>${h.employees?.name || '—'}</td>
+      <td>${h.notes || '—'}</td>
+    </tr>`).join('')
+  document.getElementById('history-loading').style.display = 'none'
+  document.getElementById('history-table').style.display = 'table'
+}
+
+window.savePrices = async () => {
+  let saved = 0
+  for (const f of FUELS) {
+    const newPrice = parseFloat(document.getElementById('p-' + f)?.value)
+    const oldPrice = parseFloat(currentPrices[f]?.price_per_gallon || 0)
+    if (newPrice && newPrice !== oldPrice) {
+      const { error } = await updateFuelPrice(f, newPrice, null, 'Manual update')
+      if (error) { alert('Error saving ' + f + ': ' + error.message); return }
+      saved++
+    }
+  }
+  if (saved > 0) { alert(saved + ' price(s) updated and saved to history!'); loadPrices() }
+  else alert('No changes detected.')
+}
+window.loadPrices = loadPrices
+loadPrices()
+</script>
+</body>
+</html>

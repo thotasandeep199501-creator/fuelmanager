@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inventory — FuelManager</title>
+<link rel="stylesheet" href="css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-logo"><div class="logo-icon"><i class="ti ti-gas-station"></i></div><div><div class="logo-name">FuelManager</div><div class="logo-sub">Main Street Station</div></div></div>
+    <nav class="sidebar-nav">
+      <a href="index.html"       class="nav-link"><i class="ti ti-layout-dashboard"></i><span>Dashboard</span></a>
+      <a href="sales.html"       class="nav-link"><i class="ti ti-chart-bar"></i><span>Live Sales</span></a>
+      <a href="inventory.html"   class="nav-link active"><i class="ti ti-box"></i><span>Inventory</span></a>
+      <a href="prices.html"      class="nav-link"><i class="ti ti-tag"></i><span>Prices</span></a>
+      <a href="delivery.html"    class="nav-link"><i class="ti ti-truck-delivery"></i><span>Deliveries</span></a>
+      <a href="timesheet.html"   class="nav-link"><i class="ti ti-clock"></i><span>Timesheet</span></a>
+      <a href="reports.html"     class="nav-link"><i class="ti ti-file-text"></i><span>Reports</span></a>
+      <a href="downloads.html"   class="nav-link"><i class="ti ti-download"></i><span>Downloads</span></a>
+      <a href="suggestions.html" class="nav-link"><i class="ti ti-bulb"></i><span>Suggestions</span></a>
+    </nav>
+    <div class="sidebar-footer"><a href="#" class="nav-link"><i class="ti ti-settings"></i><span>Settings</span></a></div>
+  </aside>
+  <main class="main-content">
+    <div class="topbar">
+      <div><h1 class="topbar-title">Inventory</h1><div class="topbar-sub">Live stock levels from database</div></div>
+      <div class="topbar-actions">
+        <button class="btn btn-outline" onclick="loadInventory()"><i class="ti ti-refresh"></i> Refresh</button>
+        <button class="btn btn-primary" onclick="showAddForm()"><i class="ti ti-plus"></i> Add item</button>
+      </div>
+    </div>
+
+    <div class="metrics-grid cols-4" style="margin-bottom:1rem">
+      <div class="metric-card mc-neutral"><div class="mc-label">Total items</div><div class="mc-value" id="inv-total">—</div></div>
+      <div class="metric-card mc-neutral" style="background:var(--store-light)"><div class="mc-label" style="color:var(--store)">In stock</div><div class="mc-value" id="inv-ok">—</div></div>
+      <div class="metric-card mc-neutral" style="background:var(--amber-light)"><div class="mc-label" style="color:var(--amber)">Low stock</div><div class="mc-value" id="inv-low">—</div></div>
+      <div class="metric-card mc-neutral" style="background:var(--red-light)"><div class="mc-label" style="color:var(--red)">Critical</div><div class="mc-value" id="inv-crit">—</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">All inventory items</span>
+        <select class="btn btn-sm" style="cursor:pointer" onchange="filterInv(this.value)">
+          <option value="all">All categories</option>
+          <option value="fuel">Fuel</option>
+          <option value="auto">Auto</option>
+          <option value="beverages">Beverages</option>
+          <option value="snacks">Snacks</option>
+          <option value="tobacco">Tobacco</option>
+          <option value="lottery">Lottery</option>
+        </select>
+      </div>
+      <div id="inv-loading" style="text-align:center;padding:2rem;color:var(--text-2)"><i class="ti ti-loader" style="animation:spin 1s linear infinite;font-size:22px"></i></div>
+      <table id="inv-table" style="display:none">
+        <thead><tr><th>Item</th><th>Category</th><th>Stock</th><th>Unit</th><th>Reorder at</th><th>Status</th><th></th></tr></thead>
+        <tbody id="inv-tbody"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+<script type="module">
+import { getInventory, updateInventoryQty } from './js/db.js'
+
+let allItems = []
+
+async function loadInventory() {
+  document.getElementById('inv-loading').style.display = 'block'
+  document.getElementById('inv-table').style.display = 'none'
+  const { data, error } = await getInventory()
+  if (error) { alert('Error loading inventory: ' + error.message); return }
+  allItems = data
+
+  const ok   = data.filter(i => parseFloat(i.current_qty) >= parseFloat(i.reorder_level))
+  const low  = data.filter(i => parseFloat(i.current_qty) < parseFloat(i.reorder_level) && parseFloat(i.current_qty) > 0)
+  const crit = data.filter(i => parseFloat(i.current_qty) <= 0)
+  document.getElementById('inv-total').textContent = data.length
+  document.getElementById('inv-ok').textContent    = ok.length
+  document.getElementById('inv-low').textContent   = low.length
+  document.getElementById('inv-crit').textContent  = crit.length
+
+  renderInv(allItems)
+  document.getElementById('inv-loading').style.display = 'none'
+  document.getElementById('inv-table').style.display = 'table'
+}
+
+function statusBadge(item) {
+  const qty = parseFloat(item.current_qty), reorder = parseFloat(item.reorder_level)
+  if (qty <= 0)          return '<span class="badge b-crit">Critical</span>'
+  if (qty < reorder)     return '<span class="badge b-low">Low</span>'
+  return '<span class="badge b-ok">OK</span>'
+}
+
+function renderInv(items) {
+  document.getElementById('inv-tbody').innerHTML = items.length ? items.map(i => `
+    <tr data-cat="${i.category}">
+      <td>${i.item_name}</td>
+      <td style="text-transform:capitalize">${i.category}</td>
+      <td>${parseFloat(i.current_qty).toLocaleString()}</td>
+      <td>${i.unit}</td>
+      <td>${parseFloat(i.reorder_level).toLocaleString()} ${i.unit}</td>
+      <td>${statusBadge(i)}</td>
+      <td><button class="btn btn-sm" onclick="editQty('${i.id}','${i.item_name}',${i.current_qty})"><i class="ti ti-edit"></i></button></td>
+    </tr>`).join('')
+  : '<tr><td colspan="7" style="text-align:center;color:var(--text-2);padding:1.5rem">No items found. Add your first inventory item!</td></tr>'
+}
+
+window.filterInv = cat => renderInv(cat==='all' ? allItems : allItems.filter(i => i.category===cat))
+window.loadInventory = loadInventory
+window.showAddForm = () => {
+  const name = prompt('Item name:')
+  if (!name) return
+  alert('Add item form — full form coming soon! For now add items directly in Supabase Table Editor.')
+}
+window.editQty = async (id, name, current) => {
+  const newQty = prompt(`Update quantity for "${name}"\nCurrent: ${current}`, current)
+  if (newQty === null || isNaN(newQty)) return
+  const { error } = await updateInventoryQty(id, parseFloat(newQty))
+  if (error) alert('Error: ' + error.message)
+  else { alert('Quantity updated!'); loadInventory() }
+}
+
+loadInventory()
+</script>
+</body>
+</html>

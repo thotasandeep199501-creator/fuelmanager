@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suggestions — FuelManager</title>
+<link rel="stylesheet" href="css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-logo"><div class="logo-icon"><i class="ti ti-gas-station"></i></div><div><div class="logo-name">FuelManager</div><div class="logo-sub">Main Street Station</div></div></div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-link"><i class="ti ti-layout-dashboard"></i><span>Dashboard</span></a>
+      <a href="sales.html" class="nav-link"><i class="ti ti-chart-bar"></i><span>Live Sales</span></a>
+      <a href="inventory.html" class="nav-link"><i class="ti ti-box"></i><span>Inventory</span></a>
+      <a href="prices.html" class="nav-link"><i class="ti ti-tag"></i><span>Prices</span></a>
+      <a href="delivery.html" class="nav-link"><i class="ti ti-truck-delivery"></i><span>Deliveries</span></a>
+      <a href="timesheet.html" class="nav-link"><i class="ti ti-clock"></i><span>Timesheet</span></a>
+      <a href="reports.html" class="nav-link"><i class="ti ti-file-text"></i><span>Reports</span></a>
+      <a href="downloads.html" class="nav-link"><i class="ti ti-download"></i><span>Downloads</span></a>
+      <a href="suggestions.html" class="nav-link active"><i class="ti ti-bulb"></i><span>Suggestions</span></a>
+    </nav>
+    <div class="sidebar-footer"><a href="#" class="nav-link"><i class="ti ti-settings"></i><span>Settings</span></a></div>
+  </aside>
+  <main class="main-content">
+    <div class="topbar">
+      <div><h1 class="topbar-title">AI Suggestions</h1><div class="topbar-sub">Smart recommendations based on your sales, inventory, and pricing data</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="ti ti-alert-triangle" style="color:var(--red);margin-right:6px"></i>Urgent — action needed now</div>
+      <div style="display:flex;flex-direction:column;gap:0;">
+        <div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
+          <div style="width:36px;height:36px;border-radius:var(--radius);background:var(--red-light);color:var(--red);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0"><i class="ti ti-alert-triangle"></i></div>
+          <div><div style="font-size:13px;font-weight:600;color:var(--text)">Order windshield fluid immediately</div><div style="font-size:12px;color:var(--text-3);margin-top:2px">Only 8 units left — 12 units below reorder level. At current sales rate, stock runs out in ~2 days.</div></div>
+          <button class="btn btn-sm btn-red" style="margin-left:auto;flex-shrink:0" onclick="showToast('Order placed!')">Order now</button>
+        </div>
+        <div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
+          <div style="width:36px;height:36px;border-radius:var(--radius);background:var(--amber-light);color:var(--amber);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0"><i class="ti ti-truck"></i></div>
+          <div><div style="font-size:13px;font-weight:600;color:var(--text)">Schedule premium fuel delivery</div><div style="font-size:12px;color:var(--text-3);margin-top:2px">Premium tank at 28% — order 5,000 gal this week before weekend demand rises.</div></div>
+          <button class="btn btn-sm btn-amber" style="margin-left:auto;flex-shrink:0" onclick="showToast('Delivery scheduled!')">Schedule</button>
+        </div>
+        <div style="display:flex;gap:12px;padding:10px 0">
+          <div style="width:36px;height:36px;border-radius:var(--radius);background:var(--lottery-light);color:var(--lottery);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0"><i class="ti ti-ticket"></i></div>
+          <div><div style="font-size:13px;font-weight:600;color:var(--text)">Restock $2 scratch tickets</div><div style="font-size:12px;color:var(--text-3);margin-top:2px">Best-selling ticket today. Only 4 books left. Request a new book from your lottery distributor.</div></div>
+          <button class="btn btn-sm" style="margin-left:auto;flex-shrink:0" onclick="showToast('Request sent!')">Request</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="ti ti-trending-up" style="color:var(--gas);margin-right:6px"></i>Pricing opportunities</div>
+      <div style="display:flex;flex-direction:column;gap:0;">
+        <div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
+          <div style="width:36px;height:36px;border-radius:var(--radius);background:var(--gas-light);color:var(--gas);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0"><i class="ti ti-trending-up"></i></div>
+          <div><div style="font-size:13px;font-weight:600;color:var(--text)">Regular price increase possible</div><div style="font-size:12px;color:var(--text-3);margin-top:2px">Shell charges $0.05 more at 0.3 mi. You may test $3.42 and monitor volume impact over 24hrs.</div></div>
+        </div>
+        <div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
+          <div style="width:36px;height:36px;border-radius:var(--radius);background:var(--store-light);color:var(--store);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0"><i class="ti ti-coffee"></i></div>
+          <div><div style="font-size:13px;font-weight:600;color:var(--text)">Bundle coffee + scratch ticket promo</div><div style="font-size:12px;color:var(--text-3);margin-top:2px">Coffee is your #3 store item. A "$1 off scratch with coffee" promo could boost lottery revenue 8–12% during the 6–9 AM rush.</div></div>
+        </div>
+        <div style="display:flex;gap:12px;padding:10px 0">
+          <div style="width:36px;height:36px;border-radius:var(--radius);background:var(--lottery-light);color:var(--lottery);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0"><i class="ti ti-clock"></i></div>
+          <div><div style="font-size:13px;font-weight:600;color:var(--text)">Peak hours: 6–9 AM and 3–6 PM</div><div style="font-size:12px;color:var(--text-3);margin-top:2px">Ensure all 8 pumps are operational during peak windows. 2 offline pumps today cost an estimated $180–$240 in lost revenue.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><i class="ti ti-chart-bar" style="color:var(--store);margin-right:6px"></i>Sales insights — this week</div>
+      <div style="display:flex;flex-direction:column;gap:0;">
+        <div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
+          <div style="width:36px;height:36px;border-radius:var(--radius);background:var(--store-light);color:var(--store);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0"><i class="ti ti-arrow-up-right"></i></div>
+          <div><div style="font-size:13px;font-weight:600;color:var(--text)">Lottery sales up 18% this week</div><div style="font-size:12px;color:var(--text-3);margin-top:2px">Powerball jackpot is driving significant traffic. Consider expanding scratch ticket display near the register.</div></div>
+        </div>
+        <div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
+          <div style="width:36px;height:36px;border-radius:var(--radius);background:var(--gas-light);color:var(--gas);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0"><i class="ti ti-droplet"></i></div>
+          <div><div style="font-size:13px;font-weight:600;color:var(--text)">Diesel sales strongest on Mon, Wed, Fri</div><div style="font-size:12px;color:var(--text-3);margin-top:2px">Commercial truck traffic follows a weekly pattern. Ensure diesel tank is at 80%+ by Sunday night.</div></div>
+        </div>
+        <div style="display:flex;gap:12px;padding:10px 0">
+          <div style="width:36px;height:36px;border-radius:var(--radius);background:var(--amber-light);color:var(--amber);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0"><i class="ti ti-shopping-cart"></i></div>
+          <div><div style="font-size:13px;font-weight:600;color:var(--text)">Energy drinks outpacing coffee on weekends</div><div style="font-size:12px;color:var(--text-3);margin-top:2px">Energy drink sales are 34% higher on Sat/Sun. Consider increasing weekend order quantity by 20%.</div></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="js/app.js"></script>
+</body>
+</html>
