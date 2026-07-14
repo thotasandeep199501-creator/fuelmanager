@@ -149,7 +149,7 @@ async function loadDashboard() {
       getTodaySales()
     ])
 
-    if (totErr || errors.length) throw new Error('DB error')
+    if (totErr) throw new Error('DB error')
 
     // Totals banner
     document.getElementById('grand-total').textContent      = fmt$(totals.grand_total)
