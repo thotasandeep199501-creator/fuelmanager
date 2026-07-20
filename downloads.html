@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Downloads — FuelManager</title>
+<title>Downloads - FuelManager</title>
 <link rel="stylesheet" href="css/style.css">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -26,45 +26,121 @@
   </aside>
   <main class="main-content">
     <div class="topbar">
-      <div><h1 class="topbar-title">Downloads &amp; Exports</h1><div class="topbar-sub">Download any report, transaction log, or timesheet — daily, monthly, or yearly</div></div>
+      <div><h1 class="topbar-title">Downloads &amp; Exports</h1><div class="topbar-sub">Download real CSV exports of your transaction data</div></div>
     </div>
 
     <div class="card">
-      <div class="card-title"><i class="ti ti-bolt" style="color:var(--amber);margin-right:5px"></i>Quick downloads — today</div>
-      <div class="quick-row"><div class="qr-left"><i class="ti ti-receipt" style="font-size:18px;color:var(--gas)"></i><div><div class="qr-name">Today's full transaction log</div><div class="qr-sub">All gas, lottery &amp; store — May 25, 2026</div></div></div><div class="qr-btns"><button class="btn btn-sm btn-pdf" onclick="showToast('Transactions PDF downloaded!')"><i class="ti ti-file-type-pdf"></i> PDF</button><button class="btn btn-sm btn-csv" onclick="showToast('Transactions CSV downloaded!')"><i class="ti ti-file-type-csv"></i> CSV</button></div></div>
-      <div class="quick-row"><div class="qr-left"><i class="ti ti-report" style="font-size:18px;color:var(--lottery)"></i><div><div class="qr-name">Today's daily report</div><div class="qr-sub">Gas, lottery, store totals summary</div></div></div><div class="qr-btns"><button class="btn btn-sm btn-pdf" onclick="showToast('Daily report PDF!')"><i class="ti ti-file-type-pdf"></i> PDF</button><button class="btn btn-sm btn-email" onclick="showToast('Report emailed!')"><i class="ti ti-mail"></i> Email</button></div></div>
-      <div class="quick-row"><div class="qr-left"><i class="ti ti-clock" style="font-size:18px;color:var(--teal)"></i><div><div class="qr-name">Today's shift &amp; timesheet</div><div class="qr-sub">Clock-ins, hours worked today</div></div></div><div class="qr-btns"><button class="btn btn-sm btn-pdf" onclick="showToast('Timesheet PDF!')"><i class="ti ti-file-type-pdf"></i> PDF</button><button class="btn btn-sm btn-xlsx" onclick="showToast('Timesheet Excel!')"><i class="ti ti-table"></i> Excel</button></div></div>
-      <div class="quick-row"><div class="qr-left"><i class="ti ti-box" style="font-size:18px;color:var(--red)"></i><div><div class="qr-name">Current inventory snapshot</div><div class="qr-sub">All stock levels right now</div></div></div><div class="qr-btns"><button class="btn btn-sm btn-pdf" onclick="showToast('Inventory PDF!')"><i class="ti ti-file-type-pdf"></i> PDF</button><button class="btn btn-sm btn-xlsx" onclick="showToast('Inventory Excel!')"><i class="ti ti-table"></i> Excel</button></div></div>
-      <div class="quick-row"><div class="qr-left"><i class="ti ti-calendar-week" style="font-size:18px;color:var(--gas)"></i><div><div class="qr-name">This week's payroll summary</div><div class="qr-sub">Hours + overtime + estimated pay</div></div></div><div class="qr-btns"><button class="btn btn-sm btn-pdf" onclick="showToast('Payroll PDF!')"><i class="ti ti-file-type-pdf"></i> PDF</button><button class="btn btn-sm btn-xlsx" onclick="showToast('Payroll Excel!')"><i class="ti ti-table"></i> Excel</button></div></div>
+      <div class="card-title"><i class="ti ti-bolt" style="color:var(--amber);margin-right:5px"></i>Quick downloads - today</div>
+      <div class="quick-row"><div class="qr-left"><i class="ti ti-receipt" style="font-size:18px;color:var(--gas)"></i><div><div class="qr-name">Today's full transaction log</div><div class="qr-sub">All gas, lottery &amp; store sales</div></div></div><div class="qr-btns"><button class="btn btn-sm btn-csv" onclick="exportRange('all','Today','today_transactions')"><i class="ti ti-file-type-csv"></i> CSV</button></div></div>
+      <div class="quick-row"><div class="qr-left"><i class="ti ti-box" style="font-size:18px;color:var(--red)"></i><div><div class="qr-name">Current inventory snapshot</div><div class="qr-sub">All stock levels right now</div></div></div><div class="qr-btns"><button class="btn btn-sm btn-csv" onclick="exportInventory()"><i class="ti ti-file-type-csv"></i> CSV</button></div></div>
+      <div class="quick-row"><div class="qr-left"><i class="ti ti-clock" style="font-size:18px;color:var(--teal)"></i><div><div class="qr-name">Today's shift &amp; timesheet</div><div class="qr-sub">Clock-ins, hours worked today</div></div></div><div class="qr-btns"><button class="btn btn-sm btn-csv" onclick="exportTimesheet()"><i class="ti ti-file-type-csv"></i> CSV</button></div></div>
     </div>
 
     <div class="section-label"><i class="ti ti-receipt" style="margin-right:4px"></i>Transaction exports</div>
     <div class="export-grid">
-      <div class="export-card"><div class="ec-top"><div class="ec-icon ic-blue"><i class="ti ti-droplet"></i></div><div class="ec-info"><div class="ec-title">Gas sales</div><div class="ec-desc">Pump #, fuel type, gallons, price, payment</div></div></div><div class="ec-controls"><select class="btn btn-sm" id="gas-r" style="flex:1;cursor:pointer"><option>Today</option><option>This week</option><option>This month</option><option>Last month</option><option>This year</option><option>Last year</option></select></div><div class="ec-btns"><button class="btn btn-sm btn-pdf" onclick="dlToast('gas-r','Gas','PDF')"><i class="ti ti-file-type-pdf"></i> PDF</button><button class="btn btn-sm btn-csv" onclick="dlToast('gas-r','Gas','CSV')"><i class="ti ti-file-type-csv"></i> CSV</button><button class="btn btn-sm btn-xlsx" onclick="dlToast('gas-r','Gas','Excel')"><i class="ti ti-table"></i> Excel</button></div></div>
-      <div class="export-card"><div class="ec-top"><div class="ec-icon ic-purple"><i class="ti ti-ticket"></i></div><div class="ec-info"><div class="ec-title">Lottery sales</div><div class="ec-desc">Ticket type, qty, amount, employee</div></div></div><div class="ec-controls"><select class="btn btn-sm" id="lot-r" style="flex:1;cursor:pointer"><option>Today</option><option>This week</option><option>This month</option><option>Last month</option><option>This year</option></select></div><div class="ec-btns"><button class="btn btn-sm btn-pdf" onclick="dlToast('lot-r','Lottery','PDF')"><i class="ti ti-file-type-pdf"></i> PDF</button><button class="btn btn-sm btn-csv" onclick="dlToast('lot-r','Lottery','CSV')"><i class="ti ti-file-type-csv"></i> CSV</button><button class="btn btn-sm btn-xlsx" onclick="dlToast('lot-r','Lottery','Excel')"><i class="ti ti-table"></i> Excel</button></div></div>
-      <div class="export-card"><div class="ec-top"><div class="ec-icon ic-green"><i class="ti ti-shopping-cart"></i></div><div class="ec-info"><div class="ec-title">Inside store sales</div><div class="ec-desc">Category, item, qty, price, payment</div></div></div><div class="ec-controls"><select class="btn btn-sm" id="str-r" style="flex:1;cursor:pointer"><option>Today</option><option>This week</option><option>This month</option><option>Last month</option><option>This year</option></select></div><div class="ec-btns"><button class="btn btn-sm btn-pdf" onclick="dlToast('str-r','Store','PDF')"><i class="ti ti-file-type-pdf"></i> PDF</button><button class="btn btn-sm btn-csv" onclick="dlToast('str-r','Store','CSV')"><i class="ti ti-file-type-csv"></i> CSV</button><button class="btn btn-sm btn-xlsx" onclick="dlToast('str-r','Store','Excel')"><i class="ti ti-table"></i> Excel</button></div></div>
-      <div class="export-card"><div class="ec-top"><div class="ec-icon ic-gray"><i class="ti ti-receipt-2"></i></div><div class="ec-info"><div class="ec-title">All transactions</div><div class="ec-desc">Gas + lottery + store combined</div></div></div><div class="ec-controls"><select class="btn btn-sm" id="all-r" style="flex:1;cursor:pointer"><option>Today</option><option>This week</option><option>This month</option><option>This year</option><option>All time</option></select></div><div class="ec-btns"><button class="btn btn-sm btn-pdf" onclick="dlToast('all-r','All transactions','PDF')"><i class="ti ti-file-type-pdf"></i> PDF</button><button class="btn btn-sm btn-csv" onclick="dlToast('all-r','All transactions','CSV')"><i class="ti ti-file-type-csv"></i> CSV</button><button class="btn btn-sm btn-xlsx" onclick="dlToast('all-r','All transactions','Excel')"><i class="ti ti-table"></i> Excel</button></div></div>
+      <div class="export-card"><div class="ec-top"><div class="ec-icon ic-blue"><i class="ti ti-droplet"></i></div><div class="ec-info"><div class="ec-title">Gas sales</div><div class="ec-desc">Pump #, fuel type, gallons, price, payment</div></div></div><div class="ec-controls"><select class="btn btn-sm" id="gas-r" style="flex:1;cursor:pointer"><option value="today">Today</option><option value="week">This week</option><option value="month">This month</option><option value="year">This year</option><option value="all">All time</option></select></div><div class="ec-btns"><button class="btn btn-sm btn-csv" onclick="exportRange('gas_sales',document.getElementById('gas-r').value,'gas_sales')" style="flex:1"><i class="ti ti-file-type-csv"></i> Download CSV</button></div></div>
+      <div class="export-card"><div class="ec-top"><div class="ec-icon ic-purple"><i class="ti ti-ticket"></i></div><div class="ec-info"><div class="ec-title">Lottery sales</div><div class="ec-desc">Ticket type, qty, amount, employee</div></div></div><div class="ec-controls"><select class="btn btn-sm" id="lot-r" style="flex:1;cursor:pointer"><option value="today">Today</option><option value="week">This week</option><option value="month">This month</option><option value="year">This year</option><option value="all">All time</option></select></div><div class="ec-btns"><button class="btn btn-sm btn-csv" onclick="exportRange('lottery_sales',document.getElementById('lot-r').value,'lottery_sales')" style="flex:1"><i class="ti ti-file-type-csv"></i> Download CSV</button></div></div>
+      <div class="export-card"><div class="ec-top"><div class="ec-icon ic-green"><i class="ti ti-shopping-cart"></i></div><div class="ec-info"><div class="ec-title">Inside store sales</div><div class="ec-desc">Category, item, qty, price, payment</div></div></div><div class="ec-controls"><select class="btn btn-sm" id="str-r" style="flex:1;cursor:pointer"><option value="today">Today</option><option value="week">This week</option><option value="month">This month</option><option value="year">This year</option><option value="all">All time</option></select></div><div class="ec-btns"><button class="btn btn-sm btn-csv" onclick="exportRange('store_sales',document.getElementById('str-r').value,'store_sales')" style="flex:1"><i class="ti ti-file-type-csv"></i> Download CSV</button></div></div>
+      <div class="export-card"><div class="ec-top"><div class="ec-icon ic-gray"><i class="ti ti-receipt-2"></i></div><div class="ec-info"><div class="ec-title">All transactions</div><div class="ec-desc">Gas + lottery + store combined</div></div></div><div class="ec-controls"><select class="btn btn-sm" id="all-r" style="flex:1;cursor:pointer"><option value="today">Today</option><option value="week">This week</option><option value="month">This month</option><option value="year">This year</option><option value="all">All time</option></select></div><div class="ec-btns"><button class="btn btn-sm btn-csv" onclick="exportRange('all',document.getElementById('all-r').value,'all_transactions')" style="flex:1"><i class="ti ti-file-type-csv"></i> Download CSV</button></div></div>
     </div>
 
-    <div class="section-label"><i class="ti ti-file-analytics" style="margin-right:4px"></i>Summary reports</div>
+    <div class="section-label"><i class="ti ti-file-analytics" style="margin-right:4px"></i>Reports &amp; other data</div>
     <div class="export-grid">
-      <div class="export-card"><div class="ec-top"><div class="ec-icon ic-coral"><i class="ti ti-calendar-event"></i></div><div class="ec-info"><div class="ec-title">Daily report</div><div class="ec-desc">Revenue totals — one day at a time</div></div></div><div class="ec-controls"><input type="date" class="btn btn-sm" id="daily-d" value="2026-05-25" style="flex:1"></div><div class="ec-btns"><button class="btn btn-sm btn-pdf" onclick="showToast('Daily PDF downloaded!')"><i class="ti ti-file-type-pdf"></i> PDF</button><button class="btn btn-sm btn-email" onclick="showToast('Report emailed!')"><i class="ti ti-mail"></i> Email</button></div></div>
-      <div class="export-card"><div class="ec-top"><div class="ec-icon ic-amber"><i class="ti ti-calendar-month"></i></div><div class="ec-info"><div class="ec-title">Monthly report</div><div class="ec-desc">Full month summary + daily breakdown</div></div></div><div class="ec-controls"><select class="btn btn-sm" id="mon-r" style="flex:1;cursor:pointer"><option>May 2026</option><option>April 2026</option><option>March 2026</option><option>February 2026</option><option>January 2026</option><option>December 2025</option></select></div><div class="ec-btns"><button class="btn btn-sm btn-pdf" onclick="dlToast('mon-r','Monthly report','PDF')"><i class="ti ti-file-type-pdf"></i> PDF</button><button class="btn btn-sm btn-xlsx" onclick="dlToast('mon-r','Monthly report','Excel')"><i class="ti ti-table"></i> Excel</button><button class="btn btn-sm btn-email" onclick="dlToast('mon-r','Monthly report','Email')"><i class="ti ti-mail"></i> Email</button></div></div>
-      <div class="export-card"><div class="ec-top"><div class="ec-icon ic-teal"><i class="ti ti-calendar-stats"></i></div><div class="ec-info"><div class="ec-title">Yearly report</div><div class="ec-desc">Full year — monthly totals and trends</div></div></div><div class="ec-controls"><select class="btn btn-sm" id="yr-r" style="flex:1;cursor:pointer"><option>2026</option><option>2025</option><option>2024</option></select></div><div class="ec-btns"><button class="btn btn-sm btn-pdf" onclick="dlToast('yr-r','Yearly report','PDF')"><i class="ti ti-file-type-pdf"></i> PDF</button><button class="btn btn-sm btn-xlsx" onclick="dlToast('yr-r','Yearly report','Excel')"><i class="ti ti-table"></i> Excel</button><button class="btn btn-sm btn-email" onclick="dlToast('yr-r','Yearly report','Email')"><i class="ti ti-mail"></i> Email</button></div></div>
-      <div class="export-card"><div class="ec-top"><div class="ec-icon ic-gray"><i class="ti ti-database-export"></i></div><div class="ec-info"><div class="ec-title">Full data backup</div><div class="ec-desc">Everything — all tables, all records</div></div></div><div class="ec-controls"><select class="btn btn-sm" style="flex:1;cursor:pointer"><option>All time (2 years)</option><option>This year only</option><option>Last year only</option></select></div><div class="ec-btns"><button class="btn btn-sm btn-csv" onclick="showToast('Full backup downloading...')"><i class="ti ti-file-type-csv"></i> CSV</button><button class="btn btn-sm btn-xlsx" onclick="showToast('Full backup Excel downloading...')"><i class="ti ti-table"></i> Excel</button></div></div>
+      <div class="export-card"><div class="ec-top"><div class="ec-icon ic-coral"><i class="ti ti-calendar-event"></i></div><div class="ec-info"><div class="ec-title">Daily reports history</div><div class="ec-desc">Last 30 auto-generated daily summaries</div></div></div><div class="ec-btns"><button class="btn btn-sm btn-csv" onclick="exportReports()" style="flex:1"><i class="ti ti-file-type-csv"></i> Download CSV</button></div></div>
+      <div class="export-card"><div class="ec-top"><div class="ec-icon ic-gray"><i class="ti ti-database-export"></i></div><div class="ec-info"><div class="ec-title">Full data backup</div><div class="ec-desc">All gas, lottery &amp; store sales - all time</div></div></div><div class="ec-btns"><button class="btn btn-sm btn-csv" onclick="exportRange('all','all','full_backup')" style="flex:1"><i class="ti ti-file-type-csv"></i> Download CSV</button></div></div>
     </div>
 
-    <div class="section-label"><i class="ti ti-mail" style="margin-right:4px"></i>Automatic scheduled reports</div>
-    <div class="card">
-      <div class="toggle-row"><span>Daily summary report (every night at 10 PM)</span><div class="toggle on" onclick="toggleSwitch(this)"></div></div>
-      <div class="toggle-row"><span>Weekly report (every Sunday night)</span><div class="toggle on" onclick="toggleSwitch(this)"></div></div>
-      <div class="toggle-row"><span>Monthly report (1st of every month)</span><div class="toggle on" onclick="toggleSwitch(this)"></div></div>
-      <div class="toggle-row"><span>Low inventory alert (when stock hits reorder level)</span><div class="toggle on" onclick="toggleSwitch(this)"></div></div>
-      <div class="toggle-row"><span>Payroll summary (every Friday)</span><div class="toggle" onclick="toggleSwitch(this)"></div></div>
-      <div class="toggle-row"><span style="color:var(--text-3)">Sending to:</span><span style="font-family:var(--mono);font-size:12px">owner@mainstreetstation.com</span></div>
-    </div>
+    <div id="dl-status" style="margin-top:12px;font-size:13px;color:var(--text-2)"></div>
   </main>
 </div>
-<script src="js/app.js"></script>
+<script type="module">
+import { getSalesByRange, getInventory, getTodayTimeEntries, getRecentReports, today } from './js/db.js'
+
+function rangeFor(key) {
+  const end = today()
+  const d = new Date()
+  if (key === 'today') return { start: end, end }
+  if (key === 'week') { const s = new Date(d); s.setDate(d.getDate() - 7); return { start: s.toISOString().split('T')[0], end } }
+  if (key === 'month') { const s = new Date(d); s.setMonth(d.getMonth() - 1); return { start: s.toISOString().split('T')[0], end } }
+  if (key === 'year') { const s = new Date(d); s.setFullYear(d.getFullYear() - 1); return { start: s.toISOString().split('T')[0], end } }
+  return { start: '2000-01-01', end } // all time
+}
+
+function toCSV(rows) {
+  if (!rows.length) return ''
+  const cols = Object.keys(rows[0])
+  const esc = v => {
+    if (v === null || v === undefined) return ''
+    const s = String(v)
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s
+  }
+  return [cols.join(','), ...rows.map(r => cols.map(c => esc(r[c])).join(','))].join('\n')
+}
+
+function download(filename, csvText) {
+  if (!csvText) { setStatus('No data found for that range.'); return }
+  const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+  setStatus('Downloaded ' + filename)
+}
+
+function setStatus(msg) {
+  document.getElementById('dl-status').textContent = msg
+  setTimeout(() => { document.getElementById('dl-status').textContent = '' }, 4000)
+}
+
+window.exportRange = async (table, rangeKey, filenamePrefix) => {
+  setStatus('Preparing export...')
+  const { start, end } = rangeFor(rangeKey)
+  let rows = []
+  if (table === 'all') {
+    const [gas, lot, str] = await Promise.all([
+      getSalesByRange('gas_sales', start, end),
+      getSalesByRange('lottery_sales', start, end),
+      getSalesByRange('store_sales', start, end)
+    ])
+    rows = [
+      ...gas.data.map(r => ({ source: 'gas', ...r })),
+      ...lot.data.map(r => ({ source: 'lottery', ...r })),
+      ...str.data.map(r => ({ source: 'store', ...r }))
+    ]
+  } else {
+    const { data } = await getSalesByRange(table, start, end)
+    rows = data
+  }
+  download(`${filenamePrefix}_${start}_to_${end}.csv`, toCSV(rows))
+}
+
+window.exportInventory = async () => {
+  setStatus('Preparing export...')
+  const { data } = await getInventory()
+  download(`inventory_${today()}.csv`, toCSV(data || []))
+}
+
+window.exportTimesheet = async () => {
+  setStatus('Preparing export...')
+  const { data } = await getTodayTimeEntries()
+  const rows = (data || []).map(r => ({
+    employee: r.employees?.name || '',
+    role: r.employees?.role || '',
+    clock_in: r.clock_in,
+    clock_out: r.clock_out || '',
+  }))
+  download(`timesheet_${today()}.csv`, toCSV(rows))
+}
+
+window.exportReports = async () => {
+  setStatus('Preparing export...')
+  const { data } = await getRecentReports(30)
+  download(`daily_reports_last30.csv`, toCSV(data || []))
+}
+</script>
 </body>
 </html>
