@@ -140,3 +140,32 @@ export function subscribeToSales(onNew) {
     .subscribe()
 }
 export function unsubscribe(ch) { if (ch) supabase.removeChannel(ch) }
+
+
+// REPORT GENERATION
+export async function generateDailyReport() {
+    const t = today()
+    const { gas, lottery, store } = await getTodaySales()
+    const gas_total = gas.reduce((s, r) => s + parseFloat(r.total_amount || 0), 0)
+    const lottery_total = lottery.reduce((s, r) => s + parseFloat(r.total_amount || 0), 0)
+    const store_total = store.reduce((s, r) => s + parseFloat(r.total_amount || 0), 0)
+    const gallons_sold = gas.reduce((s, r) => s + parseFloat(r.gallons || 0), 0)
+    const total_transactions = gas.length + lottery.length + store.length
+    const grand_total = gas_total + lottery_total + store_total
+
+  const report = {
+        report_date: t,
+        gas_total, lottery_total, store_total, grand_total,
+        total_transactions, gallons_sold
+  }
+
+  const { data: existing } = await supabase.from('daily_reports').select('id').eq('report_date', t).maybeSingle()
+
+  if (existing) {
+        const { data, error } = await supabase.from('daily_reports').update(report).eq('id', existing.id).select().single()
+        return { data, error }
+  } else {
+        const { data, error } = await supabase.from('daily_reports').insert(report).select().single()
+        return { data, error }
+  }
+}
