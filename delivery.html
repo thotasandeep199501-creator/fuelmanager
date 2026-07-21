@@ -146,7 +146,7 @@ window.submitDelivery = async () => {
 
     const { data: delivery, error: delErr } = await saveDelivery({
       vendor_name, invoice_number: invoice_number || null, delivery_date,
-      total_items: lines.length, status: 'completed', notes: notes || null
+      total_items: lines.length, status: 'submitted', notes: notes || null
     })
     if (delErr) throw delErr
 
